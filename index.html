@@ -145,6 +145,10 @@ a{color:var(--primary);text-decoration:none}
 @media(max-width:360px){
   .study-grid{grid-template-columns:1fr}
 }
+
+/* Furigana (ruby) */
+ruby{ruby-align:center}
+ruby rt{font-size:0.55em;color:var(--text-sub);font-weight:400}
 </style>
 </head>
 <body>
@@ -578,6 +582,57 @@ level4:{name:"応用",sub:"実践IS力",color:"var(--l4)",tagClass:"tag-l4",cate
 // ============================================================
 let state={currentScreen:"dash",quizState:null,studyState:null,radarChart:null,historyChart:null};
 
+// ============================================================
+// FURIGANA (読み仮名) MAP
+// ============================================================
+const FURIGANA_MAP=[
+  ["仕訳","しわけ"],["勘定科目","かんじょうかもく"],["伝票","でんぴょう"],["記帳","きちょう"],
+  ["複式簿記","ふくしきぼき"],["借方","かりかた"],["貸方","かしかた"],
+  ["売掛金","うりかけきん"],["買掛金","かいかけきん"],["消込","けしこみ"],
+  ["支払サイト","しはらいサイト"],["突合","とつごう"],["締め請求","しめせいきゅう"],
+  ["都度請求","つどせいきゅう"],["前払金","まえばらいきん"],["前受金","まえうけきん"],
+  ["未払金","みばらいきん"],["未収金","みしゅうきん"],["仮払金","かりばらいきん"],
+  ["仮受金","かりうけきん"],["検収","けんしゅう"],["前受金","まえうけきん"],
+  ["全銀フォーマット","ぜんぎんフォーマット"],["小口現金","こぐちげんきん"],
+  ["口座振替","こうざふりかえ"],["口座振込","こうざふりこみ"],
+  ["月次決算","げつじけっさん"],["年次決算","ねんじけっさん"],
+  ["四半期決算","しはんきけっさん"],["中間決算","ちゅうかんけっさん"],
+  ["試算表","しさんひょう"],["損益計算書","そんえきけいさんしょ"],
+  ["貸借対照表","たいしゃくたいしょうひょう"],["財務諸表","ざいむしょひょう"],
+  ["減価償却","げんかしょうきゃく"],["棚卸","たなおろし"],["決算整理","けっさんせいり"],
+  ["引当金","ひきあてきん"],["賞与引当金","しょうよひきあてきん"],
+  ["適格請求書","てきかくせいきゅうしょ"],["仕入税額控除","しいれぜいがくこうじょ"],
+  ["源泉徴収","げんせんちょうしゅう"],["年末調整","ねんまつちょうせい"],
+  ["過少申告加算税","かしょうしんこくかさんぜい"],["重加算税","じゅうかさんぜい"],
+  ["延滞税","えんたいぜい"],["下請法","したうけほう"],["法人税","ほうじんぜい"],
+  ["法定調書","ほうていちょうしょ"],["確定申告","かくていしんこく"],
+  ["稟議","りんぎ"],["決裁","けっさい"],["承認経路","しょうにんけいろ"],
+  ["証憑","しょうひょう"],["内部統制","ないぶとうせい"],["監査","かんさ"],
+  ["職務分掌","しょくむぶんしょう"],["経費精算","けいひせいさん"],
+  ["請求書","せいきゅうしょ"],["領収書","りょうしゅうしょ"],
+  ["帳簿","ちょうぼ"],["摘要","てきよう"],["残高","ざんだか"],["元帳","もとちょう"],
+  ["債権","さいけん"],["時効","じこう"],
+];
+// 長い語を先にマッチさせるためソート
+FURIGANA_MAP.sort((a,b)=>b[0].length-a[0].length);
+
+function addFurigana(text){
+  // テキスト内の用語にrubyタグを付ける
+  let result=text;
+  const used=new Set();
+  for(const[kanji,reading]of FURIGANA_MAP){
+    if(used.has(kanji))continue;
+    const idx=result.indexOf(kanji);
+    if(idx===-1)continue;
+    // rubyタグ内にネストしないようチェック
+    const before=result.substring(0,idx);
+    if(before.lastIndexOf("<ruby>")>before.lastIndexOf("</ruby>"))continue;
+    result=result.substring(0,idx)+`<ruby>${kanji}<rp>(</rp><rt>${reading}</rt><rp>)</rp></ruby>`+result.substring(idx+kanji.length);
+    used.add(kanji);
+  }
+  return result;
+}
+
 function getProgress(){
   const raw=localStorage.getItem("bk-progress");
   return raw?JSON.parse(raw):{answers:{},sessions:[],streak:{count:0,lastDate:""},studiedCards:[]};
@@ -774,10 +829,17 @@ function renderFlashcard(){
   const s=state.studyState;
   if(!s||!s.cards)return;
   const q=s.cards[s.index];
-  document.getElementById("fc-counter").textContent=`${s.index+1} / ${s.cards.length}（${s.catName}）`;
-  document.getElementById("fc-front").textContent=q.question;
+  const lv=QUIZ_DATA[s.levelKey];
+  const catKeys=Object.keys(lv.categories);
+  const curCatIdx=catKeys.indexOf(s.catName);
+  let counterText=`${s.index+1} / ${s.cards.length}（${s.catName}）`;
+  if(s.index===s.cards.length-1 && curCatIdx<catKeys.length-1){
+    counterText+=` → 次: ${catKeys[curCatIdx+1]}`;
+  }
+  document.getElementById("fc-counter").textContent=counterText;
+  document.getElementById("fc-front").innerHTML=addFurigana(q.question);
   document.getElementById("fc-reading").textContent="";
-  let backHtml=q.explanation;
+  let backHtml=addFurigana(q.explanation);
   if(q.choices)backHtml+=`<br><br><b>選択肢:</b> ${q.choices.join(" / ")}<br><b>答え:</b> ${q.choices[q.answer]}`;
   if(q.acceptableAnswers)backHtml+=`<br><br><b>答え:</b> ${q.acceptableAnswers[0]}`;
   document.getElementById("fc-back").innerHTML=backHtml;
@@ -789,7 +851,23 @@ function renderFlashcard(){
 }
 
 function flipCard(){document.getElementById("flashcard").classList.toggle("flipped")}
-function nextCard(){const s=state.studyState;if(s&&s.index<s.cards.length-1){s.index++;renderFlashcard()}}
+function nextCard(){
+  const s=state.studyState;
+  if(!s)return;
+  if(s.index<s.cards.length-1){s.index++;renderFlashcard()}
+  else{
+    // 最後のカード → 次のカテゴリへ
+    const lv=QUIZ_DATA[s.levelKey];
+    const catKeys=Object.keys(lv.categories);
+    const curIdx=catKeys.indexOf(s.catName);
+    if(curIdx<catKeys.length-1){
+      showFlashcards(s.levelKey,catKeys[curIdx+1]);
+    }else{
+      // 最後のカテゴリ → カテゴリ一覧に戻る
+      showStudyCats();
+    }
+  }
+}
 function prevCard(){const s=state.studyState;if(s&&s.index>0){s.index--;renderFlashcard()}}
 
 // ============================================================
@@ -842,7 +920,7 @@ function renderQuestion(){
   document.getElementById("quiz-prog-fill").style.width=`${(qs.index/qs.questions.length)*100}%`;
   document.getElementById("quiz-tag").textContent=q.catName;
   document.getElementById("quiz-tag").className="tag "+q.tagClass;
-  document.getElementById("q-text").textContent=q.question;
+  document.getElementById("q-text").innerHTML=addFurigana(q.question);
 
   // Hide all input areas
   document.getElementById("q-choices").style.display="none";
@@ -865,7 +943,7 @@ function renderQuestion(){
     shuffled.forEach((ci,i)=>{
       const btn=document.createElement("button");
       btn.className="choice-btn";
-      btn.textContent=q.choices[ci];
+      btn.innerHTML=addFurigana(q.choices[ci]);
       btn.onclick=()=>{
         choicesDiv.querySelectorAll(".choice-btn").forEach(b=>b.classList.remove("selected"));
         btn.classList.add("selected");
@@ -946,7 +1024,7 @@ function submitAnswer(){
   label.innerHTML=isCorrect?'<span class="result-icon">&#10003;</span><span class="exp-correct">正解！</span>':'<span class="result-icon">&#10007;</span><span class="exp-wrong">不正解</span>';
   let expText=q.explanation;
   if(!isCorrect&&q.type==="text"){expText=`<b>正解:</b> ${q.acceptableAnswers[0]}<br><br>${q.explanation}`}
-  document.getElementById("exp-text").innerHTML=expText;
+  document.getElementById("exp-text").innerHTML=addFurigana(expText);
   expDiv.classList.add("show");
 
   document.getElementById("q-submit").style.display="none";
