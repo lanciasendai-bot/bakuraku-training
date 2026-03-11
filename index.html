@@ -1,0 +1,1091 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>バクラクBSM学習ツール</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="バクラク学習">
+<meta name="theme-color" content="#0170B9">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --primary:#0170B9;--primary-hover:#015a94;--primary-light:#E8F4FC;
+  --text:#3a3a3a;--text-sub:#4B4F58;--bg:#FFFFFF;--bg-section:#F2F5F7;
+  --border:#E5E7EB;--yellow:#FFE58D;
+  --l1:#0170B9;--l2:#16A34A;--l3:#CA8A04;--l4:#9333EA;
+  --correct:#16A34A;--wrong:#DC2626;
+  --nav-h:64px;--safe-b:env(safe-area-inset-bottom,0px);
+}
+body{font-family:"Noto Sans JP",sans-serif;background:var(--bg);color:var(--text);font-size:15px;line-height:1.7;-webkit-font-smoothing:antialiased;padding-bottom:calc(var(--nav-h) + var(--safe-b))}
+a{color:var(--primary);text-decoration:none}
+
+/* Layout */
+.app{max-width:720px;margin:0 auto;padding:20px 16px 32px}
+.screen{display:none}.screen.active{display:block}
+
+/* Bottom Nav */
+.bottom-nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:var(--bg);border-top:1px solid var(--border);display:flex;z-index:100}
+.nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;color:var(--text-sub);font-size:10px;cursor:pointer;transition:color .15s;border:none;background:none;font-family:inherit;-webkit-tap-highlight-color:transparent}
+.nav-item.active{color:var(--primary);font-weight:500}
+.nav-item svg{width:22px;height:22px;fill:currentColor}
+
+/* Cards */
+.card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.card-header{font-size:13px;font-weight:500;color:var(--text-sub);margin-bottom:8px}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:500;font-family:inherit;cursor:pointer;border:none;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.btn-primary{background:var(--primary);color:#fff;width:100%}.btn-primary:hover{background:var(--primary-hover)}
+.btn-outline{background:transparent;color:var(--primary);border:1.5px solid var(--primary)}.btn-outline:hover{background:var(--primary-light)}
+.btn-sm{padding:8px 16px;font-size:13px;border-radius:6px}
+.btn:disabled{opacity:.5;cursor:default}
+
+/* Tags */
+.tag{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:500}
+.tag-l1{background:var(--primary-light);color:var(--l1)}
+.tag-l2{background:#f0fdf4;color:var(--l2)}
+.tag-l3{background:#fefce8;color:var(--l3)}
+.tag-l4{background:#faf5ff;color:var(--l4)}
+
+/* Progress bars */
+.prog-track{width:100%;height:6px;background:var(--bg-section);border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;border-radius:3px;transition:width .4s ease}
+
+/* Dashboard */
+.dash-header{margin-bottom:24px}
+.dash-title{font-size:22px;font-weight:700;margin-bottom:4px}
+.dash-sub{font-size:13px;color:var(--text-sub)}
+.streak-badge{display:inline-flex;align-items:center;gap:4px;background:var(--yellow);color:#92400e;padding:4px 12px;border-radius:20px;font-size:13px;font-weight:500;margin-top:8px}
+.level-row{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.level-label{font-size:13px;font-weight:500;min-width:80px}
+.level-pct{font-size:13px;color:var(--text-sub);min-width:36px;text-align:right}
+.chart-wrap{max-width:320px;margin:0 auto 24px}
+.weak-list{list-style:none}
+.weak-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);font-size:14px}
+.weak-pct{font-weight:500}
+.recommend-card{background:var(--primary-light);border:none;cursor:pointer;transition:background .15s}
+.recommend-card:hover{background:#d0eaf8}
+
+/* Study */
+.study-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.study-level-btn{padding:20px 16px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg);cursor:pointer;text-align:left;font-family:inherit;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.study-level-btn:hover{border-color:var(--primary);background:var(--primary-light)}
+.study-level-btn .sl-name{font-size:15px;font-weight:700;margin-bottom:4px;display:block}
+.study-level-btn .sl-count{font-size:12px;color:var(--text-sub)}
+.cat-list{list-style:none}.cat-item{padding:14px 0;border-bottom:1px solid var(--border);cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-size:14px}
+.cat-item:hover{color:var(--primary)}
+.flashcard{min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;transition:transform .3s;perspective:600px}
+.fc-front{font-size:24px;font-weight:700;margin-bottom:8px}.fc-reading{font-size:14px;color:var(--text-sub);margin-bottom:16px}
+.fc-back{font-size:15px;line-height:1.8;display:none}
+.flashcard.flipped .fc-front,.flashcard.flipped .fc-reading{display:none}
+.flashcard.flipped .fc-back{display:block}
+.fc-nav{display:flex;gap:10px;margin-top:16px;justify-content:center}
+.back-btn{font-size:14px;color:var(--text-sub);background:none;border:none;cursor:pointer;font-family:inherit;margin-bottom:16px;display:flex;align-items:center;gap:4px}
+.back-btn:hover{color:var(--primary)}
+
+/* Quiz */
+.quiz-progress{display:flex;align-items:center;gap:12px;margin-bottom:24px}
+.quiz-counter{font-size:13px;color:var(--text-sub);white-space:nowrap}
+.q-text{font-size:18px;font-weight:700;margin-bottom:24px;line-height:1.6}
+.choices{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.choice-btn{display:block;width:100%;padding:14px 16px;background:var(--bg-section);color:var(--text);border:2px solid transparent;border-radius:8px;font-size:14px;font-family:inherit;cursor:pointer;text-align:left;transition:all .15s;-webkit-tap-highlight-color:transparent}
+.choice-btn:hover{background:var(--primary-light);border-color:#bfdbfe}
+.choice-btn.selected{background:var(--primary-light);border-color:var(--primary);font-weight:500}
+.choice-btn.correct-answer{background:#f0fdf4;border-color:var(--correct);color:var(--correct)}
+.choice-btn.wrong-answer{background:#fef2f2;border-color:var(--wrong);color:var(--wrong)}
+.text-input-area{margin-bottom:20px}
+.text-input{width:100%;padding:14px 16px;border:2px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;outline:none;transition:border-color .15s}
+.text-input:focus{border-color:var(--primary)}
+.text-input.correct-input{border-color:var(--correct);background:#f0fdf4}
+.text-input.wrong-input{border-color:var(--wrong);background:#fef2f2}
+.explanation{background:var(--bg-section);border-radius:8px;padding:16px;margin-top:16px;font-size:14px;line-height:1.7;display:none}
+.explanation.show{display:block}
+.explanation .exp-label{font-weight:700;margin-bottom:4px;font-size:13px}
+.explanation .exp-correct{color:var(--correct)}.explanation .exp-wrong{color:var(--wrong)}
+.result-icon{font-size:20px;margin-right:6px}
+
+/* Order quiz */
+.order-items{list-style:none;margin-bottom:20px}
+.order-item{padding:12px 16px;background:var(--bg-section);border:2px solid transparent;border-radius:8px;margin-bottom:6px;cursor:grab;font-size:14px;display:flex;align-items:center;gap:8px;transition:all .15s;-webkit-tap-highlight-color:transparent;user-select:none}
+.order-item.dragging{opacity:.5;border-color:var(--primary)}
+.order-item.selected-order{border-color:var(--primary);background:var(--primary-light)}
+.order-num{width:24px;height:24px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
+
+/* Quiz result */
+.quiz-result{text-align:center;padding:32px 0}
+.result-score{font-size:48px;font-weight:700;color:var(--primary);margin-bottom:8px}
+.result-label{font-size:15px;color:var(--text-sub);margin-bottom:24px}
+.result-breakdown{display:flex;justify-content:center;gap:32px;margin-bottom:32px}
+.rb-item{text-align:center}.rb-num{font-size:28px;font-weight:700}.rb-label{font-size:12px;color:var(--text-sub)}
+
+/* Progress page */
+.cat-progress-item{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)}
+.cp-name{font-size:13px;min-width:100px;flex-shrink:0}
+.cp-bar{flex:1}.cp-pct{font-size:13px;font-weight:500;min-width:40px;text-align:right}
+.status-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:24px}
+.status-box{text-align:center;padding:16px;border-radius:8px}
+.sb-num{font-size:28px;font-weight:700;display:block}.sb-label{font-size:12px;color:var(--text-sub)}
+.status-mastered{background:#f0fdf4;color:var(--correct)}
+.status-learning{background:var(--primary-light);color:var(--primary)}
+.status-untouched{background:var(--bg-section);color:var(--text-sub)}
+.history-chart{max-width:100%;height:200px;margin-bottom:24px}
+
+/* Responsive */
+@media(min-width:768px){
+  .app{padding:32px 24px 40px}
+  .study-grid{grid-template-columns:repeat(2,1fr)}
+  .q-text{font-size:20px}
+}
+@media(max-width:360px){
+  .study-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <!-- Dashboard -->
+  <div id="screen-dash" class="screen active">
+    <div class="dash-header">
+      <div class="dash-title">バクラクBSM学習ツール</div>
+      <div class="dash-sub">入社初月から活躍するためのプロダクト理解</div>
+      <div class="streak-badge" id="streak-badge" style="display:none">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/></svg>
+        <span id="streak-count">0</span>日連続学習中
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">レベル別進捗</div>
+      <div id="level-progress"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">習熟度レーダー</div>
+      <div class="chart-wrap"><canvas id="radar-chart"></canvas></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">弱点カテゴリ TOP3</div>
+      <ul class="weak-list" id="weak-list"></ul>
+    </div>
+
+    <div class="card recommend-card" id="recommend-card" onclick="goToRecommend()">
+      <div class="card-header" style="color:var(--primary)">今日のおすすめ学習</div>
+      <div id="recommend-text" style="font-size:15px;font-weight:500"></div>
+    </div>
+  </div>
+
+  <!-- Study -->
+  <div id="screen-study" class="screen">
+    <div id="study-home">
+      <div style="font-size:20px;font-weight:700;margin-bottom:16px">教材</div>
+      <div class="study-grid" id="study-levels"></div>
+    </div>
+    <div id="study-cats" style="display:none">
+      <button class="back-btn" onclick="showStudyHome()">← レベル選択に戻る</button>
+      <div style="font-size:18px;font-weight:700;margin-bottom:12px" id="study-cat-title"></div>
+      <ul class="cat-list" id="study-cat-list"></ul>
+    </div>
+    <div id="study-cards" style="display:none">
+      <button class="back-btn" onclick="showStudyCats()">← カテゴリに戻る</button>
+      <div style="font-size:13px;color:var(--text-sub);margin-bottom:8px" id="fc-counter"></div>
+      <div class="card flashcard" id="flashcard" onclick="flipCard()">
+        <div class="fc-front" id="fc-front"></div>
+        <div class="fc-reading" id="fc-reading"></div>
+        <div class="fc-back" id="fc-back"></div>
+      </div>
+      <div style="text-align:center;font-size:12px;color:var(--text-sub);margin-bottom:12px">タップで裏返す</div>
+      <div class="fc-nav">
+        <button class="btn btn-outline btn-sm" onclick="prevCard()">← 前</button>
+        <button class="btn btn-primary btn-sm" onclick="nextCard()">次 →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quiz -->
+  <div id="screen-quiz" class="screen">
+    <div id="quiz-select">
+      <div style="font-size:20px;font-weight:700;margin-bottom:16px">テスト</div>
+      <div class="study-grid" id="quiz-levels"></div>
+    </div>
+    <div id="quiz-active" style="display:none">
+      <div class="quiz-progress">
+        <div class="quiz-counter" id="quiz-counter">1 / 10</div>
+        <div class="prog-track" style="flex:1"><div class="prog-fill" id="quiz-prog-fill" style="background:var(--primary);width:0%"></div></div>
+      </div>
+      <div id="quiz-tag" class="tag" style="margin-bottom:12px"></div>
+      <div class="q-text" id="q-text"></div>
+      <div id="q-choices" class="choices"></div>
+      <div id="q-text-input" class="text-input-area" style="display:none">
+        <input type="text" class="text-input" id="q-input" placeholder="回答を入力..." autocomplete="off">
+      </div>
+      <div id="q-order" style="display:none">
+        <ul class="order-items" id="q-order-list"></ul>
+      </div>
+      <button class="btn btn-primary" id="q-submit" onclick="submitAnswer()">回答する</button>
+      <div class="explanation" id="q-explanation">
+        <div class="exp-label" id="exp-label"></div>
+        <div id="exp-text"></div>
+      </div>
+      <button class="btn btn-primary" id="q-next" style="display:none;margin-top:12px" onclick="nextQuestion()">次の問題</button>
+    </div>
+    <div id="quiz-result" class="quiz-result" style="display:none">
+      <div style="font-size:15px;color:var(--text-sub);margin-bottom:8px">テスト結果</div>
+      <div class="result-score" id="result-score">0%</div>
+      <div class="result-label" id="result-label"></div>
+      <div class="result-breakdown">
+        <div class="rb-item"><div class="rb-num" id="rb-correct" style="color:var(--correct)">0</div><div class="rb-label">正解</div></div>
+        <div class="rb-item"><div class="rb-num" id="rb-wrong" style="color:var(--wrong)">0</div><div class="rb-label">不正解</div></div>
+        <div class="rb-item"><div class="rb-num" id="rb-total">0</div><div class="rb-label">問題数</div></div>
+      </div>
+      <button class="btn btn-primary" style="margin-bottom:10px" onclick="retryQuiz()">もう一度</button>
+      <button class="btn btn-outline" onclick="showQuizSelect()">レベル選択に戻る</button>
+    </div>
+  </div>
+
+  <!-- Review -->
+  <div id="screen-review" class="screen">
+    <div id="review-home">
+      <div style="font-size:20px;font-weight:700;margin-bottom:8px">復習</div>
+      <div style="font-size:14px;color:var(--text-sub);margin-bottom:16px">間違えた問題・正答率の低い問題を優先出題</div>
+      <div class="card" id="review-stats"></div>
+      <button class="btn btn-primary" id="review-start-btn" onclick="startReview()">復習を始める</button>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div id="screen-progress" class="screen">
+    <div style="font-size:20px;font-weight:700;margin-bottom:16px">進捗</div>
+    <div class="status-grid">
+      <div class="status-box status-mastered"><span class="sb-num" id="stat-mastered">0</span><span class="sb-label">習得済み</span></div>
+      <div class="status-box status-learning"><span class="sb-num" id="stat-learning">0</span><span class="sb-label">学習中</span></div>
+      <div class="status-box status-untouched"><span class="sb-num" id="stat-untouched">0</span><span class="sb-label">未着手</span></div>
+    </div>
+    <div class="card">
+      <div class="card-header">カテゴリ別正答率</div>
+      <div id="cat-progress-list"></div>
+    </div>
+    <div class="card">
+      <div class="card-header">学習履歴（直近10回）</div>
+      <div class="history-chart"><canvas id="history-chart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Navigation -->
+<nav class="bottom-nav">
+  <button class="nav-item active" data-screen="dash">
+    <svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+    <span>ホーム</span>
+  </button>
+  <button class="nav-item" data-screen="study">
+    <svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>
+    <span>教材</span>
+  </button>
+  <button class="nav-item" data-screen="quiz">
+    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14h-2v-2h2v2zm2.07-7.75l-.9.92C12.45 10.9 12 11.5 12 13h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
+    <span>テスト</span>
+  </button>
+  <button class="nav-item" data-screen="review">
+    <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+    <span>復習</span>
+  </button>
+  <button class="nav-item" data-screen="progress">
+    <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
+    <span>進捗</span>
+  </button>
+</nav>
+
+<script>
+// ============================================================
+// QUIZ DATA (~230 questions)
+// ============================================================
+const QUIZ_DATA={
+level1:{name:"初級",sub:"経理の基礎用語",color:"var(--l1)",tagClass:"tag-l1",categories:{
+"お金の記録":[
+{id:"L1-001",type:"choice",question:"取引を「借方」と「貸方」の2面で記録するルールを何と呼ぶ？",choices:["仕訳","記帳","伝票","勘定科目"],answer:0,explanation:"仕訳（しわけ）= すべての取引を2面で記録する簿記の基本ルール。例: コピー用紙5,000円 →「消耗品費 5,000 / 現金 5,000」"},
+{id:"L1-002",type:"choice",question:"「交際費」「旅費交通費」「消耗品費」など、お金の使い道・もらい道のカテゴリ名を何と呼ぶ？",choices:["勘定科目","仕訳","伝票","財務諸表"],answer:0,explanation:"勘定科目 = 仕訳で使うカテゴリ名。どの科目に分類するかは会社や業種で異なり、判断が属人化しやすい"},
+{id:"L1-003",type:"choice",question:"取引を記録するための紙やデータ（入金伝票・出金伝票など）を総称して何と呼ぶ？",choices:["伝票","仕訳","帳簿","勘定科目"],answer:0,explanation:"伝票 = 会計ソフトに入力する前の「元ネタ」。入金伝票・出金伝票・振替伝票がある"},
+{id:"L1-004",type:"text",question:"取引を帳簿に書き込むことを漢字2文字で何と言う？",acceptableAnswers:["記帳","きちょう","キチョウ"],explanation:"記帳 = 昔は手書きの帳簿、今は会計ソフトへの入力。「記帳する」≒「仕訳を入力する」"},
+{id:"L1-005",type:"choice",question:"「消耗品費 5,000 / 現金 5,000」という記録方法は何？",choices:["仕訳","記帳","伝票","決算"],answer:0,explanation:"仕訳は取引を借方（左）と貸方（右）に分けて記録する"},
+{id:"L1-006",type:"text",question:"お金の使い道・もらい道の「タグ」にあたるものを何と呼ぶ？（漢字4文字）",acceptableAnswers:["勘定科目","かんじょうかもく","カンジョウカモク"],explanation:"勘定科目 = 仕訳で使うカテゴリ名。交際費、旅費交通費、消耗品費など"},
+{id:"L1-007",type:"choice",question:"仕訳で左側に書く方を何と呼ぶ？",choices:["借方","貸方","摘要","残高"],answer:0,explanation:"借方（かりかた）= 仕訳の左側。費用の発生や資産の増加を記録する"},
+{id:"L1-008",type:"choice",question:"仕訳で右側に書く方を何と呼ぶ？",choices:["貸方","借方","勘定","元帳"],answer:0,explanation:"貸方（かしかた）= 仕訳の右側。収益の発生や負債の増加を記録する"},
+{id:"L1-009",type:"text",question:"1つの取引を必ず2つの側面（借方・貸方）で記録する簿記の方法を何と呼ぶ？（漢字4文字）",acceptableAnswers:["複式簿記","ふくしきぼき","フクシキボキ"],explanation:"複式簿記 = 企業会計の基本。借方と貸方が必ず同額になる"},
+],
+"請求・支払":[
+{id:"L1-010",type:"choice",question:"商品を売ったけど、まだもらっていないお金のことを何と言う？",choices:["売掛金","買掛金","未払金","前受金"],answer:0,explanation:"売掛金 =「ツケ」のイメージ。月末締め翌月払いなら、売った月は売掛金として計上し、翌月入金されたら消す"},
+{id:"L1-011",type:"choice",question:"商品を買ったけど、まだ払っていないお金のことを何と言う？",choices:["買掛金","売掛金","未収金","前払金"],answer:0,explanation:"買掛金 = 売掛金の逆。仕入先に対する「未払い」の状態"},
+{id:"L1-012",type:"text",question:"「もらうべきお金」と「実際に入金されたお金」を突き合わせて帳簿を消すことを何と言う？（漢字2文字）",acceptableAnswers:["消込","けしこみ","ケシコミ","消し込み"],explanation:"消込 = 例: A社への売掛金50万円→口座に50万円入金確認→売掛金を消す"},
+{id:"L1-013",type:"choice",question:"請求書を受け取ってから実際に支払うまでの期間を何と呼ぶ？",choices:["支払サイト","支払期限","締め日","決済日"],answer:0,explanation:"支払サイト = 「月末締め翌月末払い」なら約30日。取引先ごとに異なる"},
+{id:"L1-014",type:"choice",question:"月末などの締め日にまとめて1枚の請求書を出す方式は？",choices:["締め請求","都度請求","一括請求","前払い"],answer:0,explanation:"締め請求 = 期間中の取引をまとめて請求。都度請求は取引ごとに毎回発行"},
+{id:"L1-015",type:"text",question:"2つ以上の書類の内容が合っているか照らし合わせることを漢字2文字で何と言う？",acceptableAnswers:["突合","とつごう","トツゴウ"],explanation:"突合 = 請求書と納品書の金額一致チェック、カード明細と領収書の照合など"},
+{id:"L1-016",type:"choice",question:"「発注書」「納品書」「請求書」の3つを照らし合わせる確認作業を何と呼ぶ？",choices:["3点突合","消込","仕訳","検収"],answer:0,explanation:"3点突合 = 発注した内容と届いた内容と請求された内容が一致しているかチェック"},
+{id:"L1-017",type:"choice",question:"商品やサービスを受け取る前に先に支払ったお金を何と呼ぶ？",choices:["前払金","未払金","買掛金","仮払金"],answer:0,explanation:"前払金 = 手付金やデポジットなど。まだ納品されていないが先に支払済みのお金"},
+{id:"L1-018",type:"choice",question:"商品をまだ納品していないのに先にもらったお金を何と呼ぶ？",choices:["前受金","売掛金","未収金","仮受金"],answer:0,explanation:"前受金 = 前受金は「まだ仕事をしていないのに先にもらったお金」。翌月以降の売上になる"},
+{id:"L1-019",type:"text",question:"納品された商品が注文通りか確認して受け入れることを何と言う？（漢字2文字）",acceptableAnswers:["検収","けんしゅう","ケンシュウ"],explanation:"検収 = 検収が完了して初めて支払い義務が発生する。検収基準で売上を計上する会社も多い"},
+],
+"振込・銀行":[
+{id:"L1-020",type:"choice",question:"銀行にまとめて振り込みを指示するためのデータファイルを何と呼ぶ？",choices:["FBデータ","CSVデータ","全銀データ","振込依頼書"],answer:0,explanation:"FBデータ = Firm Bankingの略。全銀フォーマットで作成しネットバンキングにアップロードする"},
+{id:"L1-021",type:"text",question:"FBデータの書式ルールとして全国銀行協会が定めたデータ形式を何と呼ぶ？",acceptableAnswers:["全銀フォーマット","ぜんぎんフォーマット","ゼンギンフォーマット","全銀"],explanation:"全銀フォーマット = 振込先の銀行コード・口座番号・金額を決まった並びで記載。1文字ズレると振込エラー"},
+{id:"L1-022",type:"choice",question:"会社に置いてある少額の現金（切手代やタクシー代など）を何と呼ぶ？",choices:["小口現金","売上金","預り金","仮払金"],answer:0,explanation:"小口現金 = 管理が面倒で、法人カードに置き換える動きが進んでいる"},
+{id:"L1-023",type:"text",question:"FBは何の略？（英語で）",acceptableAnswers:["Firm Banking","firm banking","FB","ファームバンキング"],explanation:"FB = Firm Banking。企業が銀行のシステムと接続して振込等を行う仕組み"},
+{id:"L1-024",type:"choice",question:"企業が毎月の給与を口座に振り込む際に使うサービスは？",choices:["総合振込","給与振込","口座振替","代金取立"],answer:1,explanation:"給与振込 = FBデータで一括処理。総合振込は取引先への支払い用"},
+{id:"L1-025",type:"choice",question:"銀行口座から自動的に引き落としてもらう仕組みを何と呼ぶ？",choices:["口座振替","口座振込","自動送金","代金取立"],answer:0,explanation:"口座振替 = 家賃や公共料金など毎月固定の支払いに使われる。引き落とし側が手続きする"},
+],
+"決算・財務":[
+{id:"L1-030",type:"choice",question:"毎月の業績を締めて集計することを何と呼ぶ？",choices:["月次決算","年次決算","四半期決算","中間決算"],answer:0,explanation:"月次決算 = 法律上の義務ではないがほとんどの企業が実施。日次の仕訳がズレると月次が狂う"},
+{id:"L1-031",type:"text",question:"すべての勘定科目の残高を一覧にした表を何と呼ぶ？（漢字3文字）",acceptableAnswers:["試算表","しさんひょう","シサンヒョウ"],explanation:"試算表 = トライアルバランス（TB）とも呼ばれる。月次決算の途中経過チェックに使う"},
+{id:"L1-032",type:"choice",question:"P/Lとは何の略？",choices:["Profit & Loss Statement","Price List","Payment Ledger","Purchase Log"],answer:0,explanation:"損益計算書 = いくら稼いで、いくら使って、いくら残ったかの表。「儲かっているか」を見る"},
+{id:"L1-033",type:"choice",question:"B/Sとは何の略？",choices:["Balance Sheet","Business Statement","Bank Summary","Budget Sheet"],answer:0,explanation:"貸借対照表 = 会社が何を持っていて、何を借りていて、純資産がいくらかの表。「会社の体力」を見る"},
+{id:"L1-034",type:"choice",question:"P/L、B/Sなどをまとめた決算書類一式を何と呼ぶ？",choices:["財務諸表","試算表","決算書","帳簿"],answer:0,explanation:"財務諸表 = 法律で作成が義務。株主・銀行・税務署に提出する"},
+{id:"L1-035",type:"text",question:"在庫の数を実際に数えて帳簿と合っているか確認することを漢字2文字で何と言う？",acceptableAnswers:["棚卸","たなおろし","タナオロシ","棚卸し"],explanation:"棚卸 = 決算時に必須。帳簿と実際の在庫の差額を損失として計上する"},
+{id:"L1-036",type:"choice",question:"100万円のPCを5年に分けて費用にする会計処理を何と呼ぶ？",choices:["減価償却","一括償却","棚卸","決算整理"],answer:0,explanation:"減価償却 = 高額な資産を使用期間にわたって費用配分するルール"},
+{id:"L1-037",type:"choice",question:"年度末に帳簿のズレを直す作業を何と呼ぶ？",choices:["決算整理","月次決算","棚卸","記帳"],answer:0,explanation:"決算整理 = 棚卸差額の反映、減価償却計算、未払費用計上など"},
+{id:"L1-038",type:"text",question:"P/Lの正式名称は？（日本語で）",acceptableAnswers:["損益計算書","そんえきけいさんしょ","ソンエキケイサンショ"],explanation:"損益計算書（P/L = Profit & Loss）= いくら稼いで、いくら使って、いくら残ったかの表"},
+{id:"L1-039A",type:"text",question:"B/Sの正式名称は？（日本語で）",acceptableAnswers:["貸借対照表","たいしゃくたいしょうひょう","タイシャクタイショウヒョウ"],explanation:"貸借対照表（B/S = Balance Sheet）= 会社が何を持ち、何を借り、差額がいくらかの表"},
+{id:"L1-039B",type:"choice",question:"「会社が何を持っていて（資産）、何を借りていて（負債）、差額（純資産）がいくらか」を表す決算書は？",choices:["貸借対照表（B/S）","損益計算書（P/L）","キャッシュフロー計算書","株主資本等変動計算書"],answer:0,explanation:"B/S = 会社の財政状態を表す。左に資産、右に負債+純資産"},
+{id:"L1-039C",type:"choice",question:"P/L・B/Sなどの決算書類一式をまとめて何と呼ぶ？",choices:["財務諸表","決算報告書","確定申告書","事業報告書"],answer:0,explanation:"財務諸表 = 損益計算書(P/L)、貸借対照表(B/S)、キャッシュフロー計算書(C/F)などの総称"},
+{id:"L1-039D",type:"choice",question:"将来の出費に備えてあらかじめ費用として計上しておくお金を何と呼ぶ？",choices:["引当金","積立金","前払金","未払金"],answer:0,explanation:"引当金 = 賞与引当金、退職給付引当金、貸倒引当金など。発生が見込まれる費用を先に計上"},
+],
+"税金・法令":[
+{id:"L1-040",type:"choice",question:"2023年10月スタートの、適格請求書を使って消費税を正しく計算する仕組みは？",choices:["インボイス制度","電子帳簿保存法","下請法","源泉徴収"],answer:0,explanation:"インボイス制度 = 登録番号が記載された適格請求書がないと仕入税額控除が受けられない"},
+{id:"L1-041",type:"text",question:"インボイス制度で求められる、法定要件を満たした請求書を何と呼ぶ？（漢字5文字）",acceptableAnswers:["適格請求書","てきかくせいきゅうしょ","テキカクセイキュウショ"],explanation:"適格請求書 = 登録番号・税率ごとの消費税額・適用税率の記載が必須"},
+{id:"L1-042",type:"choice",question:"自分が払った消費税を納税額から差し引ける制度を何と呼ぶ？",choices:["仕入税額控除","源泉徴収","年末調整","減価償却"],answer:0,explanation:"仕入税額控除 = 適格請求書がないとこの控除ができなくなる"},
+{id:"L1-043",type:"choice",question:"帳簿や書類を電子データで保存するルールを定めた法律の通称は？",choices:["電帳法","下請法","商法","会社法"],answer:0,explanation:"電子帳簿保存法 = 2024年1月から電子取引データの電子保存が義務化"},
+{id:"L1-044",type:"text",question:"電帳法の要件を満たしたソフトに与えられる認証の名称は？",acceptableAnswers:["JIIMA認証","JIIMA","ジーマ認証","ジーマ"],explanation:"JIIMA = 日本文書情報マネジメント協会。この認証があれば法的要件をクリア"},
+{id:"L1-045",type:"choice",question:"給料や報酬を払う時に所得税を天引きして代わりに納税することを何と言う？",choices:["源泉徴収","年末調整","仕入税額控除","法人税"],answer:0,explanation:"源泉徴収 = 会社は社員の所得税を給料から引いて税務署に納める義務がある"},
+{id:"L1-046",type:"choice",question:"1年間に天引きした所得税の過不足を年末に精算することを何と言う？",choices:["年末調整","源泉徴収","確定申告","月次決算"],answer:0,explanation:"年末調整 = 生命保険料控除等を考慮して再計算。過払いは還付、不足は追加徴収"},
+{id:"L1-047",type:"choice",question:"税金を少なく申告した場合のペナルティ（差額の10%）を何と呼ぶ？",choices:["過少申告加算税","重加算税","延滞税","源泉徴収"],answer:0,explanation:"過少申告加算税 = 本来の税額との差額の10%。ミスでも課される"},
+{id:"L1-048",type:"choice",question:"悪質な隠蔽・仮装があった場合に課される重いペナルティ（35%）は？",choices:["重加算税","過少申告加算税","延滞税","無申告加算税"],answer:0,explanation:"重加算税 = 意図的にごまかしたと判断されると適用される。本来の税額の35%"},
+{id:"L1-049",type:"choice",question:"大企業が下請け業者への支払いを遅延した場合、何%の遅延利息が課される？",choices:["14.6%","10%","5%","20%"],answer:0,explanation:"下請法 = 支払遅延は14.6%の遅延利息。違反すると企業名が公表される"},
+{id:"L1-050",type:"text",question:"大企業が下請け業者に不利な条件を押し付けるのを防ぐ法律の通称は？（漢字3文字）",acceptableAnswers:["下請法","したうけほう","シタウケホウ"],explanation:"下請法 = 正式名称は「下請代金支払遅延等防止法」"},
+{id:"L1-051",type:"choice",question:"電帳法で電子取引データの電子保存が義務化されたのはいつ？",choices:["2024年1月","2023年10月","2022年1月","2025年4月"],answer:0,explanation:"2024年1月から電子取引データの電子保存が義務化。紙に印刷して保存はNG"},
+{id:"L1-052",type:"choice",question:"消費税の標準税率は何%？",choices:["10%","8%","5%","15%"],answer:0,explanation:"標準税率10%。食品・飲料（酒類除く）と新聞は軽減税率8%が適用される"},
+{id:"L1-053",type:"choice",question:"食品・飲料（酒類除く）に適用される消費税率は？",choices:["8%","10%","5%","0%"],answer:0,explanation:"軽減税率8% = インボイスでは税率ごとに消費税額を分けて記載する必要がある"},
+{id:"L1-054",type:"choice",question:"会社が1年間の利益に対して国に納める税金は？",choices:["法人税","所得税","消費税","住民税"],answer:0,explanation:"法人税 = 法人の所得（利益）に課される国税。税率は約23%"},
+{id:"L1-055",type:"choice",question:"年末に会社が従業員の所得税を精算する手続きを何と呼ぶ？",choices:["年末調整","確定申告","源泉徴収","中間申告"],answer:0,explanation:"年末調整 = 毎月の源泉徴収額と年間の正しい税額の差額を調整する。11〜12月の経理の大仕事"},
+{id:"L1-056",type:"choice",question:"給与支払報告書や源泉徴収票などを税務署に提出する書類の総称は？",choices:["法定調書","確定申告書","決算報告書","納税通知書"],answer:0,explanation:"法定調書 = 毎年1月に提出が必要。経理にとって年初の重要タスク"},
+],
+"承認・管理":[
+{id:"L1-060",type:"text",question:"物を買ったり契約する前に上層部の許可をもらう手続きを漢字2文字で何と言う？",acceptableAnswers:["稟議","りんぎ","リンギ"],explanation:"稟議 = 金額や内容に応じて承認ルートが変わる。紙回覧だと承認者不在で止まる"},
+{id:"L1-061",type:"choice",question:"稟議書が最終承認者まで回ってOKが出た状態を何と言う？",choices:["決裁","稟議","承認","検収"],answer:0,explanation:"決裁 =「決裁が下りた」= 承認完了。最終的にGOを出すこと"},
+{id:"L1-062",type:"choice",question:"稟議書がどの順番で誰に回るかのルートを何と呼ぶ？",choices:["承認経路","決裁ルート","稟議フロー","回覧順"],answer:0,explanation:"承認経路 = 例: 申請者→課長→部長→経理部長。金額が大きいと社長まで回ることも"},
+{id:"L1-063",type:"text",question:"取引があったことを証明する書類（領収書・請求書・契約書など）を総称して何と呼ぶ？（漢字2文字）",acceptableAnswers:["証憑","しょうひょう","ショウヒョウ"],explanation:"証憑 = 税務調査で「この取引は本当にあったの？」と聞かれた時の証拠"},
+{id:"L1-064",type:"choice",question:"会社の中で不正やミスが起きないようにする仕組みを何と呼ぶ？",choices:["内部統制","監査","コンプライアンス","ガバナンス"],answer:0,explanation:"内部統制 = 「起票者と承認者を分ける」等。上場企業は法律で整備が義務"},
+{id:"L1-065",type:"choice",question:"帳簿・業務が正しいかを第三者がチェックすることを何と呼ぶ？",choices:["監査","内部統制","稟議","検収"],answer:0,explanation:"監査 = 内部監査（社内）と外部監査（監査法人）がある"},
+{id:"L1-066",type:"text",question:"株式を証券取引所に上場することをアルファベット3文字で何と言う？",acceptableAnswers:["IPO","ipo"],explanation:"IPO = Initial Public Offering。準備中の企業は内部統制の整備が必須"},
+{id:"L1-067",type:"choice",question:"起票者と支払者を分けるなど、1人の担当者に権限を集中させないルールを何と呼ぶ？",choices:["職務分掌","内部統制","監査","コンプライアンス"],answer:0,explanation:"職務分掌 = 不正防止の基本原則。同一人物が起票から支払まで行うと不正の温床に"},
+{id:"L1-068",type:"choice",question:"法令や社内規程を守ることを何と呼ぶ？",choices:["コンプライアンス","ガバナンス","内部統制","監査"],answer:0,explanation:"コンプライアンス = 法令遵守。違反すると企業の信用失墜や罰則につながる"},
+{id:"L1-069",type:"choice",question:"会社の経営が健全に行われるように監視・統制する仕組みを何と呼ぶ？",choices:["ガバナンス","コンプライアンス","内部統制","マネジメント"],answer:0,explanation:"コーポレートガバナンス = 企業統治。上場企業では取締役会や監査役の設置が必須"},
+],
+"その他":[
+{id:"L1-070",type:"choice",question:"AIが書類の文字を自動で読み取る技術を何と呼ぶ？",choices:["AI-OCR","AI-NLP","AI-RPA","AI-ML"],answer:0,explanation:"AI-OCR = 手書きや崩れたレイアウトも読める。従来型は定型フォーマットのみ対応"},
+{id:"L1-071",type:"choice",question:"使えば使うほどその会社に最適化されるバクラク独自のAI技術は？",choices:["パーソナライズドAI","汎用AI","生成AI","ルールベースAI"],answer:0,explanation:"パーソナライズドAI = 同じ取引先の請求書を処理するたびに仕訳提案の精度が向上"},
+{id:"L1-072",type:"choice",question:"電子データが特定時刻に存在していたことを証明する電子的な刻印は？",choices:["タイムスタンプ","電子署名","ハッシュ値","認証局"],answer:0,explanation:"タイムスタンプ = 電帳法で電子保存する際に必要。改ざん防止の証明"},
+{id:"L1-073",type:"choice",question:"ソフト同士がデータを自動でやり取りする仕組みを何と呼ぶ？",choices:["API連携","CSV連携","手動連携","FTP連携"],answer:0,explanation:"API連携 = バクラクの仕訳データがボタン1つでfreeeに反映される等"},
+{id:"L1-074",type:"choice",question:"表形式のテキストファイルでデータを出力→取り込みする方式は？",choices:["CSV連携","API連携","DB連携","XML連携"],answer:0,explanation:"CSV連携 = API連携より手間だが、ほぼすべてのソフトが対応している汎用性の高さ"},
+{id:"L1-075",type:"choice",question:"新しいシステムを導入して使い始めるまでの準備期間を何と呼ぶ？",choices:["オンボーディング","キックオフ","PoC","UAT"],answer:0,explanation:"オンボーディング = アカウント設定・マスタ登録・テスト運用・社員教育を含む"},
+{id:"L1-076",type:"choice",question:"インターネット経由でソフトウェアを利用するサービス形態をアルファベット4文字で何と呼ぶ？",choices:["SaaS","PaaS","IaaS","DaaS"],answer:0,explanation:"SaaS（Software as a Service）= バクラクはSaaS。インストール不要でブラウザから利用可能"},
+{id:"L1-077",type:"choice",question:"紙の書類をなくしてデジタル化することを何と呼ぶ？",choices:["ペーパーレス化","DX","RPA","クラウド化"],answer:0,explanation:"ペーパーレス化 = 電帳法対応とセットで進むことが多い。保管コスト・検索時間の削減につながる"},
+{id:"L1-078",type:"text",question:"デジタル技術を使って業務や組織を根本的に変革することをアルファベット2文字で何と呼ぶ？",acceptableAnswers:["DX","dx"],explanation:"DX = Digital Transformation。紙→クラウドへの移行はDXの第一歩"},
+{id:"L1-079",type:"choice",question:"業務の流れを定義して「申請→承認→完了」のように自動化するものは？",choices:["ワークフロー","フローチャート","ガントチャート","業務マニュアル"],answer:0,explanation:"ワークフロー = バクラク申請のコア機能。承認経路を自動化して紙回覧を不要にする"},
+{id:"L1-080",type:"choice",question:"電子帳簿保存法の要件を満たしたソフトに与えられるお墨付きは？",choices:["JIIMA認証","ISO認証","プライバシーマーク","SOC2"],answer:0,explanation:"JIIMA認証 = バクラクは取得済み。「このソフトなら電帳法対応OK」の第三者認証"},
+]}},
+level2:{name:"中級",sub:"業務フローの理解",color:"var(--l2)",tagClass:"tag-l2",categories:{
+"月次サイクル":[
+{id:"L2-001",type:"choice",question:"経理が最も忙しいのは月のいつ頃？",choices:["翌月1日〜5日","月末","翌月15日〜20日","翌月25日〜月末"],answer:0,explanation:"月初は請求書の一斉発行・受取・経費精算の駆け込みが集中する「請求書ラッシュ」"},
+{id:"L2-002",type:"choice",question:"月次決算の締め作業が行われるのは一般的にいつ？",choices:["翌月3日〜10日","月末","翌月1日〜3日","翌月15日以降"],answer:0,explanation:"届いた請求書の仕訳入力、売掛金の消込、試算表チェック等を行う期間"},
+{id:"L2-003",type:"choice",question:"商談のベストタイミングはいつ？",choices:["翌月15日〜25日","翌月1日〜5日","月末","翌月10日〜15日"],answer:0,explanation:"月中旬〜下旬は比較的余裕がある。業務改善やシステム検討に充てられる時期"},
+{id:"L2-004",type:"choice",question:"FBデータ作成→振込実行が行われるのは一般的にいつ？",choices:["翌月10日〜15日","月末","翌月1日〜5日","翌月20日以降"],answer:0,explanation:"支払実行と経営報告が同時期に行われる"},
+{id:"L2-005",type:"text",question:"月次決算が何営業日以上かかっている会社は改善余地が大きいと言える？（数字で）",acceptableAnswers:["10","10日","10営業日"],explanation:"10営業日以上かかっていれば改善余地大。5日以内ならかなり優秀"},
+{id:"L2-006",type:"choice",question:"「経費精算の締め切りが守られていない」場合、最も有効なバクラク製品は？",choices:["バクラク経費精算 + ビジネスカード","バクラク申請","バクラク請求書受取","バクラク電子帳簿保存"],answer:0,explanation:"モバイルアプリでどこからでも申請可能。カード連携なら決済→即時精算で締め切り問題自体が解消"},
+{id:"L2-015",type:"choice",question:"月次決算の翌月10〜15日に行う業務は？",choices:["FBデータ作成→振込+経営報告","請求書発行","年末調整","棚卸"],answer:0,explanation:"支払実行（FBデータ→振込）+ 月次決算確定→P/L作成→経営層への報告"},
+{id:"L2-016",type:"text",question:"月初に請求書が集中する現象を何と呼ぶ？（漢字＋カタカナ）",acceptableAnswers:["請求書ラッシュ","せいきゅうしょラッシュ","請求書らっしゅ"],explanation:"翌月1〜5日に請求書の一斉発行・受取・経費精算の駆け込みが集中する期間"},
+{id:"L2-017",type:"choice",question:"平均的な月次決算の締めにかかる日数は？",choices:["10営業日以上","3営業日","5営業日","20営業日"],answer:0,explanation:"優秀な企業は5日以内。バクラク導入で7日短縮できた実績がある"},
+{id:"L2-018",type:"choice",question:"月次決算の締め作業で行われないのはどれ？",choices:["年末調整","売掛金の入金確認・消込","買掛金の突合・支払準備","試算表作成"],answer:0,explanation:"年末調整は年1回の年次業務。月次締めは仕訳入力・消込・試算表チェックがメイン"},
+],
+"経理カレンダー":[
+{id:"L2-010",type:"choice",question:"日本企業の約何割が3月決算？",choices:["7割","5割","9割","3割"],answer:0,explanation:"日本企業の約7割が3月決算。次に多いのは12月決算"},
+{id:"L2-011",type:"choice",question:"3月決算企業で、経理が年間で最も余裕のある月は？",choices:["8月","4月","7月","10月"],answer:0,explanation:"8月はお盆休みもあり業務量が減る。システム導入の検討・実行に最適な時期"},
+{id:"L2-012",type:"choice",question:"提案タイミングとして最適なのは決算月のいつ頃後？",choices:["3〜4ヶ月後","直後","1ヶ月後","6ヶ月後"],answer:0,explanation:"決算を終えて「来期はもっと楽にしたい」と感じているタイミングがベスト"},
+{id:"L2-013",type:"choice",question:"決算月の前後何ヶ月は商談を避けるべき？",choices:["2ヶ月","1ヶ月","3ヶ月","避ける必要なし"],answer:0,explanation:"忙しすぎて話を聞く余裕がない。前後2ヶ月は避けるのが基本"},
+{id:"L2-014",type:"choice",question:"11月〜12月に経理が最も負担に感じる業務は？",choices:["年末調整","月次決算","棚卸","税務申告"],answer:0,explanation:"社員全員の扶養控除申告書・保険料控除証明書を回収し1枚ずつチェック"},
+],
+"発注→支払フロー":[
+{id:"L2-020",type:"order",question:"会社が物を買ってお金を払うまでの流れを正しい順番に並べてください",items:["稟議・承認","発注・契約","納品・検収","請求書受取","仕訳入力","FBデータ作成→振込"],answer:[0,1,2,3,4,5],explanation:"稟議→発注→納品→請求書受取→仕訳→振込の順。バクラクは稟議・請求書受取・仕訳・振込・証憑保管の5ステップに関わる"},
+{id:"L2-021",type:"choice",question:"発注→支払フローの10ステップ中、バクラクが関わるのは何ステップ？",choices:["5ステップ","3ステップ","7ステップ","全ステップ"],answer:0,explanation:"稟議(申請)・請求書受取・仕訳入力(AI)・FBデータ生成・証憑保管の5つ。これが「一気通貫」の意味"},
+{id:"L2-022",type:"choice",question:"仕訳入力で「属人化の最大ポイント」と言われる理由は？",choices:["勘定科目の判断がベテランの頭の中にしかないから","入力が遅いから","ソフトが難しいから","伝票が多いから"],answer:0,explanation:"「この取引先はこの科目」というルールが暗黙知。退職・異動で消失するリスク"},
+{id:"L2-023",type:"choice",question:"支払業務でFBデータを手入力するリスクは？",choices:["口座番号ミスで誤送金","処理が遅い","印刷が必要","承認が複雑"],answer:0,explanation:"全銀フォーマットは1文字ズレても振込エラー。誤送金の回収は数週間〜数ヶ月かかることも"},
+],
+"経費精算フロー":[
+{id:"L2-030",type:"choice",question:"従来の経費精算フローは全部で何ステップ？",choices:["9ステップ","5ステップ","7ステップ","12ステップ"],answer:0,explanation:"現場4ステップ(使う→領収書→申請→提出) + 経理5ステップ(チェック→承認→仕訳→支払→保管)"},
+{id:"L2-031",type:"choice",question:"バクラクビジネスカードを使うと経費精算は何ステップに短縮？",choices:["4ステップ","6ステップ","2ステップ","7ステップ"],answer:0,explanation:"カード決済→利用報告→自動突合・仕訳→承認の4ステップ。立替も紙もゼロ"},
+{id:"L2-032",type:"choice",question:"経費精算の1,000人調査で最も多かった不満は？",choices:["手作業が面倒（31%）","外出先で精算できない（28%）","手続きが多い（26%）","承認が遅い"],answer:0,explanation:"手書き・Excel入力の手間が最大の不満。次いで外出先対応、手続きの多さ"},
+{id:"L2-033",type:"choice",question:"1回の経費精算申請にかかる平均時間は？",choices:["15分","5分","30分","1時間"],answer:0,explanation:"平均15分 × 月100人 = 月25時間分の非生産時間"},
+],
+"ペルソナ別業務":[
+{id:"L2-040",type:"choice",question:"経理担当者の業務は何層構造？",choices:["日次・月次・年次の3層","日次・月次の2層","日次のみ","月次・年次の2層"],answer:0,explanation:"日次（毎日のルーティン）、月次（月初が山場）、年次（決算月が超繁忙期）の3層"},
+{id:"L2-041",type:"choice",question:"営業事務にとって月初に最も集中する業務は？",choices:["請求書の作成・発行","メール対応","在庫管理","日報作成"],answer:0,explanation:"月末締め→翌月初に一斉発行。顧客ごとに締め日・フォーマット・送付方法が異なるのが辛い"},
+{id:"L2-042",type:"choice",question:"テレワーク定着の課題で「稟議・決裁などアナログ業務」と回答した割合は？",choices:["44.7%","28.2%","31.0%","15.3%"],answer:0,explanation:"稟議のアナログ処理はテレワーク導入の最大の阻害要因の1つ"},
+{id:"L2-043",type:"choice",question:"支払業務で「起票者と支払者を分ける」ことが求められる理由は？",choices:["不正防止（内部統制）","効率化","人材育成","法律上の義務"],answer:0,explanation:"内部統制のルール。同一人物が起票から支払まで行うと不正の温床になる"},
+{id:"L2-044",type:"choice",question:"営業事務の請求書発行フローは全部で何ステップ？",choices:["5ステップ","3ステップ","7ステップ","10ステップ"],answer:0,explanation:"確認→集計→作成→承認・送付→入金確認の5ステップ"},
+{id:"L2-045",type:"choice",question:"経理部長・CFOが最も気にしているKPIは？",choices:["月次決算の締め日数","経費精算の件数","請求書の枚数","社員数"],answer:0,explanation:"月次決算の早期化は経営判断のスピードに直結。経営層が最も改善を求める指標"},
+{id:"L2-046",type:"choice",question:"経費精算のフローで現場社員が最初にやることは？",choices:["領収書の受取・撮影","仕訳入力","上司の承認を得る","会計ソフトに入力"],answer:0,explanation:"領収書をもらう→撮影→申請書作成→上司承認→経理チェック→精算→会計連携の流れ"},
+{id:"L2-047",type:"choice",question:"経費精算で経理担当者が最も工数を使うのはどの作業？",choices:["申請内容のチェック・差し戻し対応","仕訳入力","振込処理","書類保管"],answer:0,explanation:"不備のある申請の差し戻し→再申請のやり取りが最大の工数。フォームの分かりにくさが原因"},
+{id:"L2-048",type:"choice",question:"請求書の受領方法で近年急増しているのは？",choices:["メール（PDF添付）","郵送","FAX","EDI"],answer:0,explanation:"電帳法義務化でメール受取のPDF保存が必須に。紙とメールの二重管理が新たな課題"},
+{id:"L2-049",type:"choice",question:"バクラク経費精算でモバイルからできることは？",choices:["領収書撮影→申請完了まで","撮影のみ","閲覧のみ","承認のみ"],answer:0,explanation:"スマホで撮影→AI-OCR読み取り→申請書作成→提出まで完結。外出先でも精算可能"},
+],
+"年次サイクル":[
+{id:"L2-050",type:"choice",question:"3月決算企業が最も忙しくなる月は？",choices:["3月（決算月）","12月","6月","9月"],answer:0,explanation:"決算月は年間最高の繁忙期。棚卸・決算整理・税務申告の準備が一斉に始まる"},
+{id:"L2-051",type:"choice",question:"3月決算企業の決算申告期限（法人税）はいつ？",choices:["5月末","4月末","6月末","3月末"],answer:0,explanation:"決算日から2ヶ月以内に申告・納付。3月決算→5月末が期限"},
+{id:"L2-052",type:"choice",question:"株主総会が開催されるのは一般的にいつ？（3月決算の場合）",choices:["6月","5月","7月","4月"],answer:0,explanation:"決算後3ヶ月以内に定時株主総会を開催。3月決算→6月開催が一般的"},
+{id:"L2-053",type:"choice",question:"年末調整の実務が最も忙しいのはいつ？",choices:["11月〜12月","1月","9月〜10月","3月"],answer:0,explanation:"11月に従業員から書類回収、12月の最後の給与で調整額を反映する"},
+{id:"L2-054",type:"choice",question:"法定調書の提出期限はいつ？",choices:["1月末","2月末","3月末","12月末"],answer:0,explanation:"毎年1月31日が提出期限。給与支払報告書や源泉徴収票などをまとめて税務署に提出"},
+{id:"L2-055",type:"choice",question:"3月決算企業でシステム導入検討に最適な時期は？",choices:["8月（最も余裕がある）","3月","12月","1月"],answer:0,explanation:"8月は年間で最も余裕がある時期。経理が比較的落ち着いてシステム検討に時間を割ける"},
+{id:"L2-056",type:"choice",question:"源泉所得税の納期の特例（半年分まとめて納付）の納付月は？",choices:["7月と1月","6月と12月","3月と9月","4月と10月"],answer:0,explanation:"従業員10人以下の会社は半年分をまとめて7月10日・1月20日に納付できる特例がある"},
+],
+"バクラク製品":[
+{id:"L2-060",type:"choice",question:"バクラクのBSMプロダクトは全部で何種類？",choices:["6種類","4種類","8種類","3種類"],answer:0,explanation:"申請・経費精算・請求書受取・請求書発行・電子帳簿保存・ビジネスカードの6つ"},
+{id:"L2-061",type:"choice",question:"「稟議・ワークフロー」を担当するバクラク製品は？",choices:["バクラク申請","バクラク経費精算","バクラク請求書受取","バクラク電子帳簿保存"],answer:0,explanation:"バクラク申請 = AI-OCRで見積書を数秒でデータ化し、承認経路を自動分岐"},
+{id:"L2-062",type:"choice",question:"「受取請求書の処理・支払管理」を担当するバクラク製品は？",choices:["バクラク請求書受取","バクラク請求書発行","バクラク申請","バクラク経費精算"],answer:0,explanation:"バクラク請求書受取 = パーソナライズドAI-OCRで100枚同時読み取り。AI仕訳推薦搭載"},
+{id:"L2-063",type:"choice",question:"バクラク経費精算のAI-OCR精度は何%以上？",choices:["99%以上","95%以上","90%以上","85%以上"],answer:0,explanation:"99%以上の精度で領収書を読み取り。最大100枚一括読み取り対応"},
+{id:"L2-064",type:"choice",question:"バクラクビジネスカードの年会費はいくら？",choices:["無料","1,000円","5,000円","10,000円"],answer:0,explanation:"初期費用・年会費ともに無料。バーチャルカードも無料で発行可能"},
+{id:"L2-065",type:"choice",question:"バクラクビジネスカードのキャッシュバック還元率は？（入会1年間）",choices:["1.5%","1.0%","0.5%","2.0%"],answer:0,explanation:"入会1年間は1.5%、2年目以降は1.0%のキャッシュバック"},
+{id:"L2-066",type:"choice",question:"バクラク請求書発行で作成できる帳票の種類は？",choices:["請求書・見積書・納品書・領収書など全般","請求書のみ","請求書と見積書のみ","請求書と領収書のみ"],answer:0,explanation:"あらゆる帳票の作成が可能。個別作成とCSV一括作成の両方に対応"},
+{id:"L2-067",type:"choice",question:"バクラク電子帳簿保存が対応している通貨数は？",choices:["36通貨","10通貨","20通貨","50通貨"],answer:0,explanation:"海外書類にも対応。36通貨での電子保存が可能"},
+{id:"L2-068",type:"choice",question:"バクラク申請でSlackから承認する際にログインは必要？",choices:["不要","必要","初回のみ必要","管理者のみ不要"],answer:0,explanation:"Slackから直接承認可能でログイン不要。承認スピードの大幅向上に寄与"},
+{id:"L2-069",type:"choice",question:"バクラク請求書受取のAI仕訳推薦が目標とする自動化率は？",choices:["9割以上","5割以上","7割以上","10割"],answer:0,explanation:"AI明細仕訳（AIエージェント）により9割以上の請求書処理自動化を目指している"},
+{id:"L2-070",type:"choice",question:"バクラク請求書発行の導入効果（月1,000件発行の場合）の年間コスト削減額は？",choices:["約220万円","約100万円","約500万円","約50万円"],answer:0,explanation:"作業量約8割削減、年間220万円のコスト削減（月1,000件発行の場合）"},
+{id:"L2-071",type:"choice",question:"バクラク請求書受取の導入で請求書の受取→支払処理の時間をどのくらい削減できる？",choices:["80%削減","50%削減","30%削減","60%削減"],answer:0,explanation:"AI-OCR+AI仕訳推薦+自動照合により、処理時間を80%削減"},
+{id:"L2-072",type:"choice",question:"バクラクが対応している会計ソフトの数は？",choices:["12種以上","5種","8種","3種"],answer:0,explanation:"freee/マネフォ/奉行/弥生/PCA/TKC/OBIC7/SMILE V等、12種以上に対応"},
+{id:"L2-073",type:"text",question:"バクラクの累計導入企業数は？（万社単位で）",acceptableAnswers:["15000社","1.5万社","15,000社","1万5000社","15000"],explanation:"累計15,000社突破。中小〜エンタープライズまで幅広い企業規模に対応"},
+],
+"売上・入金フロー":[
+{id:"L2-080",type:"choice",question:"売上→入金フローの正しい順序は？",choices:["受注→納品→請求書発行→入金確認→消込","受注→請求書発行→納品→入金→消込","納品→受注→請求→入金→消込","入金→請求→納品→受注→消込"],answer:0,explanation:"受注→納品→請求書発行→入金確認（通帳/NB）→売掛金の消込の5ステップ"},
+{id:"L2-081",type:"choice",question:"月末締め翌月末払いの場合、支払サイトは約何日？",choices:["約30日","約15日","約60日","約90日"],answer:0,explanation:"支払サイト = 締め日から実際の支払日までの日数。30日が最も一般的"},
+{id:"L2-082",type:"choice",question:"入金確認の際に照合するのは主にどの2つ？",choices:["請求書と通帳（入金明細）","請求書と納品書","見積書と請求書","契約書と通帳"],answer:0,explanation:"請求金額と実際の入金額が一致しているか確認。振込名義が異なると突合が難しい"},
+{id:"L2-083",type:"choice",question:"法人の書類保存義務期間は原則何年？",choices:["7年","5年","3年","10年"],answer:0,explanation:"法人は7年保存が原則。欠損金がある場合は10年保存が必要"},
+]
+}},
+level3:{name:"上級",sub:"課題理解と提案力",color:"var(--l3)",tagClass:"tag-l3",categories:{
+"請求書受取の課題":[
+{id:"L3-001",type:"choice",question:"仕訳ミス・二重計上が税務調査で発覚した場合、最悪で何%のペナルティ？",choices:["重加算税35%","過少申告加算税10%","延滞税5%","罰金50%"],answer:0,explanation:"意図的な隠蔽と判断されれば重加算税35%。毎年修正申告が出ると税務調査の常連に"},
+{id:"L3-002",type:"choice",question:"仕訳の属人化を放置した場合の最大リスクは？",choices:["担当者退職で業務が回らなくなる","コストが増える","書類が増える","承認が遅れる"],answer:0,explanation:"引き継ぎに3〜6ヶ月。月次決算が遅延し経営判断が後手に回るリスク"},
+{id:"L3-003",type:"choice",question:"支払い遅延が下請法に抵触した場合のリスクは？",choices:["遅延利息14.6%+企業名公表","罰金のみ","取引停止のみ","特になし"],answer:0,explanation:"公正取引委員会から勧告を受け企業名が公表される。取引条件悪化にもつながる"},
+{id:"L3-004",type:"text",question:"同じ請求書を2回処理してしまうミスを何と呼ぶ？（漢字4文字）",acceptableAnswers:["二重支払い","二重支払","にじゅうしはらい"],explanation:"二重支払い = 余分な資金流出+返金依頼の恥+内部統制の不備として監査で指摘される"},
+{id:"L3-005",type:"choice",question:"FBデータの手作成ミスで口座番号を間違えた場合、回収にどれくらいかかる？",choices:["数週間〜数ヶ月","即日","翌日","1週間"],answer:0,explanation:"誤送金の回収は相手方の協力が必要。数週間〜数ヶ月かかることもある"},
+],
+"経費精算の課題":[
+{id:"L3-010",type:"choice",question:"年度またぎの未精算経費が発覚するとどうなる？",choices:["決算書の修正→修正申告が必要","特に問題なし","翌期に計上すればOK","口頭注意のみ"],answer:0,explanation:"「前期損益修正損」が毎年出ると税務署に目をつけられる。銀行融資の審査にも影響"},
+{id:"L3-011",type:"choice",question:"領収書を紛失すると何が起きる？",choices:["消費税の仕入税額控除が受けられなくなる可能性","特に問題なし","再発行すればOK","口頭説明で代替可能"],answer:0,explanation:"証憑がない経費は税務上否認されるリスク。インボイス制度下では特に重要"},
+{id:"L3-012",type:"choice",question:"立替精算が常態化している会社で社員が不満に感じる理由は？",choices:["自分のお金を会社のために使っている感覚","手続きが面倒","上司に怒られる","特にない"],answer:0,explanation:"精算が遅れるとモチベーション低下。採用競争力にも影響する隠れたコスト"},
+{id:"L3-013",type:"choice",question:"差し戻しの繰り返しで発生する非生産時間は月どのくらい？",choices:["1回15分×月100人=25時間","1回5分×月50人=4時間","ほぼゼロ","1回30分×月10人=5時間"],answer:0,explanation:"経理は差し戻し対応に追われ本来の分析業務ができない。現場もコア業務が中断される"},
+{id:"L3-014",type:"choice",question:"年度またぎの未精算経費が毎年発覚すると何が起きる？",choices:["税務署に目をつけられる","特に問題なし","決算が早く終わる","経費が増える"],answer:0,explanation:"前期損益修正損が毎年出ると修正申告の常連に。税務署の心証が悪くなる"},
+{id:"L3-015",type:"choice",question:"不正経費が見逃され続けた場合の最悪の事態は？",choices:["横領事件に発展","少し損するだけ","自動的に検出される","保険で補填される"],answer:0,explanation:"架空経費・水増し請求が横行→発覚時に社員の解雇・訴訟・企業の信用失墜"},
+{id:"L3-016",type:"choice",question:"経費精算で手作業が面倒と回答した社員の割合は？",choices:["31%","15%","50%","10%"],answer:0,explanation:"手書き・Excel入力の手間が最大の不満。外出先で精算できない（28%）も上位"},
+],
+"稟議の課題":[
+{id:"L3-040",type:"choice",question:"紙の稟議で承認が止まる最大の原因は？",choices:["承認者が不在（出張・テレワーク）","書類が多すぎる","内容が分からない","予算がない"],answer:0,explanation:"紙回覧は承認者が物理的にいないと完全に止まる。テレワーク時代に深刻化"},
+{id:"L3-041",type:"choice",question:"稟議の差し戻し率が高い原因は？",choices:["申請フォームが分かりにくい","承認者が厳しい","予算がない","件数が多い"],answer:0,explanation:"何を書けばいいか分からず不備だらけに。承認者も確認に時間を取られる"},
+{id:"L3-042",type:"choice",question:"「念のため」で承認ステップを増やしすぎるとどうなる？",choices:["顧客への提案スピードが落ち売上目標未達に","安全性が上がる","効率が上がる","特に影響なし"],answer:0,explanation:"リードタイムの肥大化。競合に先を越されるリスク。1件の稟議に1週間かかるケースも"},
+{id:"L3-043",type:"choice",question:"紙の稟議で内部統制上問題になる点は？",choices:["証跡が紙でしか残らず監査対応が困難","コストが安い","承認が早い","全員が確認できる"],answer:0,explanation:"IPO審査や上場維持にも影響。キャビネットから過去の稟議書を探す工数が膨大"},
+{id:"L3-044",type:"choice",question:"カード利用がリアルタイムで見えない場合のリスクは？",choices:["予算超過や不正利用の発見が遅れる","特にない","経費が減る","効率が上がる"],answer:0,explanation:"誰がいつ何にいくら使ったかが月末にしか分からない。不正防止が後手に回る"},
+{id:"L3-045",type:"choice",question:"立替精算を法人カードに切り替える最大のメリットは？",choices:["精算忘れ・証憑紛失がなくなる","ポイントが貯まる","経費が増える","手間が増える"],answer:0,explanation:"決済と同時にデータが自動連携。社員の不満解消+経理の突合工数も激減"},
+{id:"L3-046",type:"choice",question:"「請求書の手入力が大変」という課題に最適なバクラク製品は？",choices:["バクラク請求書受取（AI-OCR+AI仕訳推薦）","バクラク申請","バクラクビジネスカード","バクラク電子帳簿保存"],answer:0,explanation:"AI-OCRで自動データ化+AI仕訳推薦で勘定科目も自動判定。手入力を根本解決"},
+{id:"L3-047",type:"choice",question:"「紙の稟議で承認が止まる」という課題に最適なバクラク製品は？",choices:["バクラク申請","バクラク請求書受取","バクラク経費精算","バクラクビジネスカード"],answer:0,explanation:"Slackからログイン不要で承認可能。テレワーク中でも承認フローが止まらない"},
+{id:"L3-048",type:"choice",question:"「社員の立替精算が面倒」という課題に最適なバクラク製品は？",choices:["バクラクビジネスカード","バクラク申請","バクラク請求書発行","バクラク電子帳簿保存"],answer:0,explanation:"法人カード決済で立替不要。決済→通知→領収書撮影→利用報告が一気通貫"},
+{id:"L3-049",type:"choice",question:"「電帳法対応をどうすればいいか分からない」という課題に最適なバクラク製品は？",choices:["バクラク電子帳簿保存","バクラク経費精算","バクラク請求書発行","バクラク申請"],answer:0,explanation:"JIIMA認証取得済み。タイムスタンプ自動付与+検索要件+内部統制をカバー"},
+{id:"L3-050",type:"choice",question:"「請求書の郵送コストが高い」という課題に最適なバクラク製品は？",choices:["バクラク請求書発行（メール送付+郵送代行）","バクラク請求書受取","バクラク経費精算","バクラク電子帳簿保存"],answer:0,explanation:"メール送付でコストゼロ。紙が必要な取引先には郵送代行機能で封入・投函も不要"},
+{id:"L3-051",type:"choice",question:"「経費精算の申請ミス・差し戻しが多い」課題を解決するバクラクの機能は？",choices:["AI-OCR自動読み取り+予算超過アラート","郵送代行","タイムスタンプ","承認経路設定"],answer:0,explanation:"領収書をスマホ撮影→AI-OCRが自動入力するので手入力ミスがなくなる。予算超過も自動チェック"},
+{id:"L3-052",type:"choice",question:"買掛金の消込漏れが発生する主な原因は？",choices:["振込名義と取引先名が一致しない","件数が少ない","会計ソフトが自動で処理する","特に原因はない"],answer:0,explanation:"振込名義の表記揺れで手動照合が必要。漏れると買掛金残高がズレ経営判断を誤るリスク"},
+{id:"L3-053",type:"choice",question:"請求書の紙保管を放置するリスクは？",choices:["監査・税務調査時の書類検索に膨大な時間がかかる","コストが安い","セキュリティが高い","法的に問題なし"],answer:0,explanation:"保存義務期間（7〜10年）分の書類を物理保管。「あの請求書どこ？」の検索が最大の課題"},
+],
+"請求書発行の課題":[
+{id:"L3-020",type:"choice",question:"請求書の発行が遅れると自社に何が起きる？",choices:["入金が後ろ倒しでキャッシュフロー悪化","特に影響なし","取引先が喜ぶ","売上が増える"],answer:0,explanation:"発行遅れ→顧客の支払処理遅れ→入金後ろ倒し→資金繰りが読めなくなる"},
+{id:"L3-021",type:"choice",question:"請求漏れを放置すると最悪どうなる？",choices:["債権の時効消滅（原則5年）","特に影響なし","自動で回収される","1年で解決する"],answer:0,explanation:"売掛金が回収できないまま時効を迎えるリスク。売上も正しく反映されない"},
+{id:"L3-022",type:"choice",question:"適格請求書の要件を満たしていないと取引先に何が起きる？",choices:["仕入税額控除が受けられない","特に影響なし","手数料が増える","納税額が減る"],answer:0,explanation:"取引先に実害が出る→取引条件見直し・取引先離れにつながる"},
+{id:"L3-023",type:"choice",question:"月1,000件の請求書を郵送する場合の年間コストは？",choices:["240〜360万円","50万円","100万円","500万円"],answer:0,explanation:"1通あたり印刷+封筒+切手+人件費で200〜300円。紙の遅配リスクもある"},
+],
+"競合比較":[
+{id:"L3-030",type:"choice",question:"楽楽精算の初期費用は？",choices:["10万円","無料","5万円","20万円"],answer:0,explanation:"バクラクは初期費用無料。楽楽精算は10万円〜。中小企業にはバクラクが有利"},
+{id:"L3-031",type:"choice",question:"バクラクが競合に勝ちやすいシナリオは？",choices:["会計ソフトを変えたくない企業","すでにfreeeで統一済みの企業","大企業の複雑な承認フロー","人の目でチェックしたい企業"],answer:0,explanation:"バクラクは12種以上の会計ソフトと連携。マネフォやfreeeは自社会計への囲い込みが前提"},
+{id:"L3-032",type:"choice",question:"バクラクだけが持っている競合にない強みは？",choices:["自社発行の法人カード","AI-OCR","ワークフロー","電帳法対応"],answer:0,explanation:"バクラクビジネスカードで決済→証憑→仕訳が完全一気通貫。他社はカードを持っていない"},
+{id:"L3-033",type:"choice",question:"バクラクが負けやすいシナリオは？",choices:["すでにマネフォ/freeeで統一済みの企業","初めてシステム導入する企業","中小企業","AI活用を重視する企業"],answer:0,explanation:"同一ベンダーの一体型が便利で乗り換えコストが壁になるケース"},
+{id:"L3-034",type:"choice",question:"TOKIUMの強みでバクラクにないものは？",choices:["専任オペレーターによる人手チェック","AI-OCR","法人カード","シリーズ連携"],answer:0,explanation:"「人の目でチェックしてほしい」企業にはTOKIUMの体制が刺さる"},
+{id:"L3-035",type:"choice",question:"マネーフォワードクラウドの最大の強みは？",choices:["会計ソフトとの完全一体型","AI-OCR精度","法人カード","導入企業数"],answer:0,explanation:"自社の会計ソフトと一体で動くため、すでにマネフォ会計を使っている企業には強い"},
+{id:"L3-036",type:"choice",question:"freee経費精算の最大の強みは？",choices:["freee会計との完全一体型","料金の安さ","AI-OCR","カスタマイズ性"],answer:0,explanation:"freee会計ユーザーにとっては一体型が便利。ただし他社会計との連携は弱い"},
+{id:"L3-037",type:"choice",question:"バクラクの6プロダクト一気通貫の最大のメリットは？",choices:["申請→請求書→支払→仕訳のデータが自動で繋がる","料金が安い","導入が早い","サポートが充実"],answer:0,explanation:"他社は経費精算だけ・請求書だけなど単機能が多い。バクラクは6製品のデータが連携"},
+{id:"L3-038",type:"choice",question:"バクラク請求書受取の請求書処理で最大何枚を同時読み取り可能？",choices:["100枚","50枚","10枚","200枚"],answer:0,explanation:"最大100枚同時読み取り。複数請求書を含むPDFの自動分割にも対応"},
+{id:"L3-039",type:"choice",question:"「手入力を放置すると決算書の数字が狂い、税務調査で過少申告加算税10%が課される」これはどの課題の影響？",choices:["請求書の手入力","仕訳の属人化","二重支払い","承認の停滞"],answer:0,explanation:"最悪は重加算税35%。手入力ミスは決算の正確性を根本から揺るがす"},
+]}},
+level4:{name:"応用",sub:"実践IS力",color:"var(--l4)",tagClass:"tag-l4",categories:{
+"反論切り返し":[
+{id:"L4-001",type:"choice",question:"「Excelで十分です」と言われた時、最も効果的な切り返しは？",choices:["隠れコストを数字で示す（100人×月1時間=年240万円）","「Excelはダメです」と否定する","機能の説明をする","値引きを提案する"],answer:0,explanation:"「100人なら年間1,200時間×時給2,000円=年間240万円の隠れコスト」と数字で刺す"},
+{id:"L4-002",type:"choice",question:"「導入コストが高い」と言われた時の切り返しポイントは？",choices:["初期費用無料＋1ヶ月目から投資回収","値引き提案","他社はもっと高いと言う","機能を減らす提案"],answer:0,explanation:"バクラクは初期費用無料、月2万円〜。導入企業平均で月次締め7日早期化+年間数百時間削減"},
+{id:"L4-003",type:"choice",question:"「現場が使いこなせない」と言われた時、最も有効な数字は？",choices:["操作性満足度96%","導入企業15,000社","AI精度99%","サポート満足度98%"],answer:0,explanation:"4,000名導入企業の実績値。「スマホで領収書を撮るだけ」の簡単さを訴求"},
+{id:"L4-004",type:"choice",question:"「業務フローを変えたくない」と言われた時のキーメッセージは？",choices:["今のやり方をデジタルに載せ替えるだけ","フローを変えないとダメ","新しいフローの方が良い","段階的に変えましょう"],answer:0,explanation:"バクラクは既存の承認経路をそのまま再現可能。10種以上の項目タイプで自社フォームを再現"},
+{id:"L4-005",type:"choice",question:"「他社（楽楽精算等）と何が違うの？」に対する最も差別化できる回答は？",choices:["経費・請求書・稟議・カードが1つの基盤で繋がる+AI仕訳が学習型","値段が安い","機能が多い","サポートが良い"],answer:0,explanation:"6プロダクト一気通貫+AI仕訳推薦がルール管理不要で賢くなる点が最大の差別化"},
+{id:"L4-006",type:"choice",question:"「会計ソフトを変えたくない」への正しい返答は？",choices:["12種以上の会計ソフトに対応。今のまま使える","会計ソフトも変えた方がいい","freeeに変えましょう","会計ソフトは関係ない"],answer:0,explanation:"freee/マネフォ/奉行/弥生/PCA/TKC等に対応。既存環境を変えずに導入可能"},
+{id:"L4-007",type:"choice",question:"「セキュリティが心配」に対して最初に出すべき情報は？",choices:["JIIMA認証取得済み+電帳法・インボイス完全対応","大企業も使っている","クラウドは安全","データセンターの場所"],answer:0,explanation:"第三者認証（JIIMA）があることで客観的な信頼性を示せる"},
+],
+"ヒアリング":[
+{id:"L4-010",type:"choice",question:"「決算月はいつですか？」と聞く目的は？",choices:["繁忙期の予測","売上の把握","予算の確認","競合の特定"],answer:0,explanation:"3月決算なら4〜6月は忙しい。商談タイミングの見極めに使う"},
+{id:"L4-011",type:"choice",question:"「請求書は月に何枚届きますか？」への回答が100枚超だった場合、何を訴求する？",choices:["AI-OCRの効果","ワークフロー","法人カード","電子帳簿保存"],answer:0,explanation:"件数が多いほどAI-OCRの工数削減効果が大きい。件数×処理時間でROIを計算"},
+{id:"L4-012",type:"choice",question:"「経理は何人体制ですか？」→1〜3人の場合、何を訴求すべき？",choices:["属人化リスク（退職・異動で業務停止）","工数削減のROI","コスト削減","シリーズ連携"],answer:0,explanation:"少人数ほど特定の人に知識が集中しやすい。AI仕訳推薦で脱属人化を提案"},
+{id:"L4-013",type:"choice",question:"「承認は紙回覧ですか？」→紙だった場合、何の課題を突く？",choices:["テレワーク不可問題","コスト問題","セキュリティ問題","法令対応"],answer:0,explanation:"紙の回覧は出社必須。テレワーク時代に人材獲得・定着の障壁になることを指摘"},
+{id:"L4-014",type:"choice",question:"「IPOや上場の予定はありますか？」→ありの場合の訴求ポイントは？",choices:["内部統制の整備（ワークフロー+証跡管理）","コスト削減","AI活用","法人カード"],answer:0,explanation:"IPO準備では内部統制の整備が必須。紙の稟議・証憑だと審査で引っかかりやすい"},
+{id:"L4-015",type:"choice",question:"「月次決算は何営業日で締まりますか？」→10日以上の場合、何を訴求？",choices:["月次締め早期化（バクラク導入企業で7日短縮実績）","法人カード","電帳法対応","ワークフロー"],answer:0,explanation:"10日以上なら改善余地が大きい。優秀企業は5日以内。バクラクで7日短縮の実績あり"},
+{id:"L4-016",type:"choice",question:"「最近、経理の方の退職や異動はありましたか？」→ありの場合の最適な訴求は？",choices:["AI仕訳推薦で脱属人化","コスト削減","ペーパーレス化","法人カード"],answer:0,explanation:"属人化の痛みを今まさに感じている企業。AIが仕訳ルールを学習するので引き継ぎ不要"},
+{id:"L4-017",type:"choice",question:"「経費精算は今どうやっていますか？」→Excelの場合、何を計算して見せる？",choices:["年間の隠れコスト（人数×月1時間×12ヶ月×時給）","機能比較表","導入事例","デモ動画"],answer:0,explanation:"100人企業なら年間240万円の隠れコスト。数字で見せると経営層の稟議が通りやすい"},
+{id:"L4-018",type:"choice",question:"「請求書は紙が多いですか？メールですか？」→紙が多い場合の訴求は？",choices:["AI-OCRの自動読み取り+電帳法対応","ワークフロー","法人カード","API連携"],answer:0,explanation:"紙の請求書は手入力が必須。AI-OCRで数秒でデータ化+電帳法対応で一石二鳥"},
+],
+"導入事例":[
+{id:"L4-020",type:"choice",question:"NSグループ（パセラ）の導入効果で最も大きな数字は？",choices:["年間1,116万円のコスト削減","月次締め3日短縮","残業50%削減","ペーパーレス化"],answer:0,explanation:"複数プロダクト導入で年間1,116万円削減+月次締め7日間早期化"},
+{id:"L4-021",type:"choice",question:"キャディ（製造業）の繁忙期の残業はバクラク導入でどう変わった？",choices:["80時間→1/4に削減","80時間→ゼロ","40時間→半分","変わらない"],answer:0,explanation:"バクラク請求書受取の導入で繁忙期の残業80h→1/4に。派遣社員のコストも削減"},
+{id:"L4-022",type:"choice",question:"薬王堂（ドラッグストア）の年間工数削減は？",choices:["500時間","100時間","1,000時間","200時間"],answer:0,explanation:"バクラク請求書発行で支払通知書発行をシステム化。年間500時間の工数削減"},
+{id:"L4-023",type:"choice",question:"バクラク全体の累計で手作業を何回削減？",choices:["1.2億回","1,000万回","5,000万回","3億回"],answer:0,explanation:"データ入力の手作業を累計1.2億回削減（全体実績）"},
+{id:"L4-024",type:"choice",question:"白子町（自治体）が導入した製品は？",choices:["ビジネスカード","請求書受取","経費精算","申請"],answer:0,explanation:"年間120時間の精算業務削減目標。自治体DX推進の事例"},
+{id:"L4-025",type:"choice",question:"大西運輸のバクラク導入効果は？",choices:["月末10時間の残業ゼロ","年間1,000万円削減","社員数が半分に","特になし"],answer:0,explanation:"月末の請求書処理による残業が完全になくなった"},
+{id:"L4-026",type:"choice",question:"帝国ホテルがバクラクで処理している請求書は月何件？",choices:["約2,000件","約500件","約5,000件","約100件"],answer:0,explanation:"宿泊業界の大規模導入事例。月2,000件の請求書処理を効率化"},
+{id:"L4-027",type:"choice",question:"バクラク全体の対応業界数はいくつ以上？",choices:["12業界以上","5業界","8業界","3業界"],answer:0,explanation:"不動産、卸売・小売、公務、医療、宿泊・飲食、IT、建設、教育、製造、運輸、金融、税理士事務所等"},
+{id:"L4-028",type:"choice",question:"バクラク全体で手作業を累計何回削減？",choices:["1.2億回","1,000万回","5,000万回","3億回"],answer:0,explanation:"データ入力の手作業を累計1.2億回削減した実績"},
+{id:"L4-029",type:"choice",question:"月1,900枚の請求書処理でバクラクが削減できる月間工数は？",choices:["60時間","20時間","100時間","10時間"],answer:0,explanation:"月1,900枚の処理で60時間削減。1人あたり月間平均10時間の工数削減"},
+],
+"提案タイミング":[
+{id:"L4-030",type:"choice",question:"3月決算企業への提案ベストタイミングは何月？",choices:["7〜8月","4〜5月","1〜2月","11〜12月"],answer:0,explanation:"決算月の3〜4ヶ月後がベスト。決算を終えて改善意欲が高い+8月は年間で最も余裕"},
+{id:"L4-031",type:"choice",question:"12月決算企業に商談を避けるべき時期は？",choices:["11月〜2月","4月〜6月","7月〜8月","9月〜10月"],answer:0,explanation:"決算月の前後2ヶ月は忙しすぎて話を聞く余裕がない"},
+{id:"L4-032",type:"choice",question:"「経理の退職・異動があった」企業に最も刺さるバクラク機能は？",choices:["AI仕訳推薦（学習型で属人化解消）","郵送代行","CSV一括作成","タイムスタンプ"],answer:0,explanation:"ベテランの頭にしかなかった仕訳ルールをAIが学習。退職・異動に左右されない"},
+{id:"L4-033",type:"choice",question:"バクラクの対応会計ソフト数は？",choices:["12種以上","5種","8種","20種"],answer:0,explanation:"freee/マネフォ/奉行/弥生/PCA/TKC/OBIC7/SMILE V等。API連携またはCSV連携"},
+{id:"L4-034",type:"choice",question:"12月決算企業への提案ベストタイミングは何月？",choices:["4〜5月","1〜2月","10〜11月","8〜9月"],answer:0,explanation:"決算月の3〜4ヶ月後がベスト。12月決算→4〜5月が決算疲れ+改善意欲のタイミング"},
+{id:"L4-035",type:"choice",question:"年末調整直後（1月後半〜2月）の企業へのアプローチで有効なフレーズは？",choices:["年末調整、大変でしたよね","来期の予算はどうですか","最近忙しいですか","特にない"],answer:0,explanation:"年末調整の疲れが残っている時期。「来年はもっと楽にしませんか」の訴求が刺さる"},
+{id:"L4-036",type:"choice",question:"操作性満足度96%はどの規模の企業での実績？",choices:["4,000名導入企業","100名企業","50名企業","10,000名企業"],answer:0,explanation:"大規模企業での実績値。「スマホで領収書を撮るだけ」の簡単さの裏付け"},
+{id:"L4-037",type:"choice",question:"「請求書は月に何枚届きますか？」への回答が100枚未満の場合、何を訴求すべき？",choices:["仕訳の属人化解消（AI仕訳推薦）","AI-OCRの工数削減","一括読み取り","FBデータ自動作成"],answer:0,explanation:"枚数が少ない場合はOCRの効果より、仕訳判断の属人化やミス防止の方が刺さりやすい"},
+{id:"L4-038",type:"choice",question:"決算月の前後2ヶ月を避けるべき理由は？",choices:["忙しすぎて話を聞く余裕がない","予算がない","人事異動がある","休暇が多い"],answer:0,explanation:"決算準備〜申告で経理は超多忙。この時期に営業電話をかけると印象が悪い"},
+{id:"L4-039",type:"text",question:"バクラク導入企業の月次決算締め短縮実績は何日？（数字で）",acceptableAnswers:["7日","7","7日間"],explanation:"月次締めが7日間早期化。10日以上かかっていた企業が3〜5日で締められるように"},
+]}},
+};
+
+// ============================================================
+// APP STATE
+// ============================================================
+let state={currentScreen:"dash",quizState:null,studyState:null,radarChart:null,historyChart:null};
+
+function getProgress(){
+  const raw=localStorage.getItem("bk-progress");
+  return raw?JSON.parse(raw):{answers:{},sessions:[],streak:{count:0,lastDate:""},studiedCards:[]};
+}
+function saveProgress(p){localStorage.setItem("bk-progress",JSON.stringify(p))}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+document.querySelectorAll(".nav-item").forEach(btn=>{
+  btn.addEventListener("click",()=>{
+    const screen=btn.dataset.screen;
+    switchScreen(screen);
+  });
+});
+
+function switchScreen(name){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById("screen-"+name).classList.add("active");
+  document.querySelectorAll(".nav-item").forEach(n=>{n.classList.toggle("active",n.dataset.screen===name)});
+  state.currentScreen=name;
+  if(name==="dash")renderDashboard();
+  if(name==="study")showStudyHome();
+  if(name==="quiz")showQuizSelect();
+  if(name==="review")renderReview();
+  if(name==="progress")renderProgressPage();
+}
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getAllQuestions(){
+  const all=[];
+  for(const[lk,lv]of Object.entries(QUIZ_DATA)){
+    for(const[ck,qs]of Object.entries(lv.categories)){
+      qs.forEach(q=>all.push({...q,levelKey:lk,levelName:lv.name,catName:ck,tagClass:lv.tagClass}));
+    }
+  }
+  return all;
+}
+
+function getCatQuestions(levelKey,catName){
+  return(QUIZ_DATA[levelKey]?.categories[catName]||[]).map(q=>({...q,levelKey,levelName:QUIZ_DATA[levelKey].name,catName,tagClass:QUIZ_DATA[levelKey].tagClass}));
+}
+
+function shuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+
+function getAccuracy(qid,prog){
+  const a=prog.answers[qid];
+  if(!a)return null;
+  const total=a.correct+a.wrong;
+  return total>0?a.correct/total:null;
+}
+
+function getQuestionStatus(qid,prog){
+  const a=prog.answers[qid];
+  if(!a)return"untouched";
+  if(a.correct>=3&&a.wrong===0)return"mastered";
+  if(a.correct/(a.correct+a.wrong)>=0.8&&a.correct>=3)return"mastered";
+  return"learning";
+}
+
+function updateStreak(prog){
+  const today=new Date().toISOString().slice(0,10);
+  if(prog.streak.lastDate===today)return;
+  const yesterday=new Date(Date.now()-86400000).toISOString().slice(0,10);
+  if(prog.streak.lastDate===yesterday){prog.streak.count++;prog.streak.lastDate=today;}
+  else{prog.streak.count=1;prog.streak.lastDate=today;}
+  saveProgress(prog);
+}
+
+function normalizeAnswer(s){
+  return s.trim().toLowerCase()
+    .replace(/[\uff01-\uff5e]/g,c=>String.fromCharCode(c.charCodeAt(0)-0xfee0))
+    .replace(/\u3000/g," ")
+    .replace(/[\u30a1-\u30f6]/g,c=>String.fromCharCode(c.charCodeAt(0)-0x60));
+}
+
+function checkTextAnswer(input,acceptables){
+  const norm=normalizeAnswer(input);
+  return acceptables.some(a=>normalizeAnswer(a)===norm);
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard(){
+  const prog=getProgress();
+  const allQ=getAllQuestions();
+
+  // Streak
+  const badge=document.getElementById("streak-badge");
+  if(prog.streak.count>0){badge.style.display="inline-flex";document.getElementById("streak-count").textContent=prog.streak.count;}
+  else badge.style.display="none";
+
+  // Level progress
+  const lpDiv=document.getElementById("level-progress");
+  lpDiv.innerHTML="";
+  const levels=[["level1","初級","var(--l1)"],["level2","中級","var(--l2)"],["level3","上級","var(--l3)"],["level4","応用","var(--l4)"]];
+  levels.forEach(([lk,ln,lc])=>{
+    const qs=allQ.filter(q=>q.levelKey===lk);
+    const answered=qs.filter(q=>prog.answers[q.id]).length;
+    const pct=qs.length?Math.round(answered/qs.length*100):0;
+    lpDiv.innerHTML+=`<div class="level-row"><span class="level-label">${ln}</span><div class="prog-track" style="flex:1"><div class="prog-fill" style="width:${pct}%;background:${lc}"></div></div><span class="level-pct">${pct}%</span></div>`;
+  });
+
+  // Radar chart
+  const radarData=levels.map(([lk])=>{
+    const qs=allQ.filter(q=>q.levelKey===lk);
+    if(!qs.length)return 0;
+    let totalAcc=0,counted=0;
+    qs.forEach(q=>{const a=getAccuracy(q.id,prog);if(a!==null){totalAcc+=a;counted++}});
+    return counted?Math.round(totalAcc/counted*100):0;
+  });
+  const ctx=document.getElementById("radar-chart").getContext("2d");
+  if(state.radarChart)state.radarChart.destroy();
+  state.radarChart=new Chart(ctx,{type:"radar",data:{labels:["初級","中級","上級","応用"],datasets:[{data:radarData,backgroundColor:"rgba(1,112,185,0.15)",borderColor:"#0170B9",borderWidth:2,pointBackgroundColor:"#0170B9",pointRadius:4}]},options:{responsive:true,scales:{r:{beginAtZero:true,max:100,ticks:{stepSize:20,font:{size:11}},pointLabels:{font:{size:13,family:"Noto Sans JP"}}}},plugins:{legend:{display:false}}}});
+
+  // Weak categories
+  const catAccs=[];
+  for(const[lk,lv]of Object.entries(QUIZ_DATA)){
+    for(const[ck,qs]of Object.entries(lv.categories)){
+      let total=0,correct=0,attempted=0;
+      qs.forEach(q=>{const a=prog.answers[q.id];if(a){attempted++;total+=a.correct+a.wrong;correct+=a.correct}});
+      if(attempted>0)catAccs.push({cat:ck,level:lv.name,pct:Math.round(correct/total*100),levelKey:lk});
+    }
+  }
+  catAccs.sort((a,b)=>a.pct-b.pct);
+  const weakList=document.getElementById("weak-list");
+  weakList.innerHTML="";
+  const top3=catAccs.slice(0,3);
+  if(top3.length===0)weakList.innerHTML='<div style="padding:10px 0;font-size:14px;color:var(--text-sub)">まだデータがありません。テストを受けてみましょう</div>';
+  else top3.forEach(c=>{weakList.innerHTML+=`<li class="weak-item"><span>${c.level} / ${c.cat}</span><span class="weak-pct" style="color:${c.pct<50?"var(--wrong)":"var(--text)"}">${c.pct}%</span></li>`});
+
+  // Recommend
+  const recText=document.getElementById("recommend-text");
+  if(top3.length>0){
+    const w=top3[0];
+    recText.textContent=`${w.level}「${w.cat}」（正答率${w.pct}%）を復習する →`;
+    document.getElementById("recommend-card").onclick=()=>{startQuizForCategory(w.levelKey,w.cat)};
+  }else{
+    recText.textContent="まずは初級の教材から始めましょう →";
+    document.getElementById("recommend-card").onclick=()=>{switchScreen("study")};
+  }
+}
+
+function goToRecommend(){/* handled by onclick override */}
+
+// ============================================================
+// STUDY MODE
+// ============================================================
+function showStudyHome(){
+  document.getElementById("study-home").style.display="block";
+  document.getElementById("study-cats").style.display="none";
+  document.getElementById("study-cards").style.display="none";
+  const grid=document.getElementById("study-levels");
+  grid.innerHTML="";
+  for(const[lk,lv]of Object.entries(QUIZ_DATA)){
+    const total=Object.values(lv.categories).flat().length;
+    const cats=Object.keys(lv.categories).length;
+    grid.innerHTML+=`<button class="study-level-btn" onclick="showStudyCatsFor('${lk}')"><span class="sl-name" style="color:${lv.color}">${lv.name}</span><span class="sl-count">${lv.sub} / ${cats}カテゴリ / ${total}問</span></button>`;
+  }
+}
+
+function showStudyCatsFor(levelKey){
+  state.studyState={levelKey};
+  document.getElementById("study-home").style.display="none";
+  document.getElementById("study-cats").style.display="block";
+  document.getElementById("study-cards").style.display="none";
+  const lv=QUIZ_DATA[levelKey];
+  document.getElementById("study-cat-title").textContent=lv.name+" - "+lv.sub;
+  const list=document.getElementById("study-cat-list");
+  list.innerHTML="";
+  for(const[ck,qs]of Object.entries(lv.categories)){
+    list.innerHTML+=`<li class="cat-item" onclick="showFlashcards('${levelKey}','${ck}')">${ck}<span style="color:var(--text-sub);font-size:12px">${qs.length}問 →</span></li>`;
+  }
+}
+
+function showStudyCats(){
+  if(state.studyState)showStudyCatsFor(state.studyState.levelKey);
+  else showStudyHome();
+}
+
+function showFlashcards(levelKey,catName){
+  document.getElementById("study-home").style.display="none";
+  document.getElementById("study-cats").style.display="none";
+  document.getElementById("study-cards").style.display="block";
+  const qs=QUIZ_DATA[levelKey].categories[catName];
+  state.studyState={levelKey,catName,cards:qs,index:0};
+  renderFlashcard();
+}
+
+function renderFlashcard(){
+  const s=state.studyState;
+  if(!s||!s.cards)return;
+  const q=s.cards[s.index];
+  document.getElementById("fc-counter").textContent=`${s.index+1} / ${s.cards.length}（${s.catName}）`;
+  document.getElementById("fc-front").textContent=q.question;
+  document.getElementById("fc-reading").textContent="";
+  let backHtml=q.explanation;
+  if(q.choices)backHtml+=`<br><br><b>選択肢:</b> ${q.choices.join(" / ")}<br><b>答え:</b> ${q.choices[q.answer]}`;
+  if(q.acceptableAnswers)backHtml+=`<br><br><b>答え:</b> ${q.acceptableAnswers[0]}`;
+  document.getElementById("fc-back").innerHTML=backHtml;
+  const fc=document.getElementById("flashcard");
+  fc.classList.remove("flipped");
+  // Mark as studied
+  const prog=getProgress();
+  if(!prog.studiedCards.includes(q.id)){prog.studiedCards.push(q.id);saveProgress(prog)}
+}
+
+function flipCard(){document.getElementById("flashcard").classList.toggle("flipped")}
+function nextCard(){const s=state.studyState;if(s&&s.index<s.cards.length-1){s.index++;renderFlashcard()}}
+function prevCard(){const s=state.studyState;if(s&&s.index>0){s.index--;renderFlashcard()}}
+
+// ============================================================
+// QUIZ MODE
+// ============================================================
+function showQuizSelect(){
+  document.getElementById("quiz-select").style.display="block";
+  document.getElementById("quiz-active").style.display="none";
+  document.getElementById("quiz-result").style.display="none";
+  const grid=document.getElementById("quiz-levels");
+  grid.innerHTML="";
+  for(const[lk,lv]of Object.entries(QUIZ_DATA)){
+    const total=Object.values(lv.categories).flat().length;
+    grid.innerHTML+=`<button class="study-level-btn" onclick="startQuizForLevel('${lk}')"><span class="sl-name" style="color:${lv.color}">${lv.name}</span><span class="sl-count">${lv.sub} / ${total}問からランダム10問</span></button>`;
+  }
+}
+
+function startQuizForLevel(levelKey){
+  const allQ=[];
+  const lv=QUIZ_DATA[levelKey];
+  for(const[ck,qs]of Object.entries(lv.categories)){
+    qs.forEach(q=>allQ.push({...q,levelKey,levelName:lv.name,catName:ck,tagClass:lv.tagClass}));
+  }
+  const selected=shuffle(allQ).slice(0,10);
+  startQuiz(selected);
+}
+
+function startQuizForCategory(levelKey,catName){
+  switchScreen("quiz");
+  const qs=getCatQuestions(levelKey,catName);
+  const selected=shuffle(qs).slice(0,10);
+  startQuiz(selected);
+}
+
+function startQuiz(questions){
+  document.getElementById("quiz-select").style.display="none";
+  document.getElementById("quiz-active").style.display="block";
+  document.getElementById("quiz-result").style.display="none";
+  state.quizState={questions,index:0,correct:0,wrong:0,answered:false,currentLevel:questions[0]?.levelKey};
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const qs=state.quizState;
+  if(!qs)return;
+  const q=qs.questions[qs.index];
+  qs.answered=false;
+
+  document.getElementById("quiz-counter").textContent=`${qs.index+1} / ${qs.questions.length}`;
+  document.getElementById("quiz-prog-fill").style.width=`${(qs.index/qs.questions.length)*100}%`;
+  document.getElementById("quiz-tag").textContent=q.catName;
+  document.getElementById("quiz-tag").className="tag "+q.tagClass;
+  document.getElementById("q-text").textContent=q.question;
+
+  // Hide all input areas
+  document.getElementById("q-choices").style.display="none";
+  document.getElementById("q-text-input").style.display="none";
+  document.getElementById("q-order").style.display="none";
+  document.getElementById("q-explanation").classList.remove("show");
+  document.getElementById("q-next").style.display="none";
+  document.getElementById("q-submit").style.display="block";
+  document.getElementById("q-submit").disabled=false;
+
+  if(q.type==="choice"){
+    document.getElementById("q-choices").style.display="flex";
+    const choicesDiv=document.getElementById("q-choices");
+    // Shuffle choices but track correct answer
+    const indices=[...Array(q.choices.length).keys()];
+    const shuffled=shuffle(indices);
+    qs.shuffledChoices=shuffled;
+    qs.selectedChoice=null;
+    choicesDiv.innerHTML="";
+    shuffled.forEach((ci,i)=>{
+      const btn=document.createElement("button");
+      btn.className="choice-btn";
+      btn.textContent=q.choices[ci];
+      btn.onclick=()=>{
+        choicesDiv.querySelectorAll(".choice-btn").forEach(b=>b.classList.remove("selected"));
+        btn.classList.add("selected");
+        qs.selectedChoice=ci;
+      };
+      choicesDiv.appendChild(btn);
+    });
+  }else if(q.type==="text"){
+    document.getElementById("q-text-input").style.display="block";
+    const input=document.getElementById("q-input");
+    input.value="";input.className="text-input";input.focus();
+    input.onkeydown=(e)=>{if(e.key==="Enter")submitAnswer()};
+  }else if(q.type==="order"){
+    document.getElementById("q-order").style.display="block";
+    const list=document.getElementById("q-order-list");
+    const shuffledItems=shuffle(q.items.map((item,i)=>({text:item,origIndex:i})));
+    qs.orderItems=shuffledItems;
+    qs.orderSelected=[];
+    renderOrderItems();
+  }
+}
+
+function renderOrderItems(){
+  const qs=state.quizState;
+  const list=document.getElementById("q-order-list");
+  list.innerHTML="";
+  qs.orderItems.forEach((item,i)=>{
+    const isSelected=qs.orderSelected.includes(i);
+    const orderNum=qs.orderSelected.indexOf(i);
+    const li=document.createElement("li");
+    li.className="order-item"+(isSelected?" selected-order":"");
+    li.innerHTML=`${isSelected?`<span class="order-num">${orderNum+1}</span>`:"<span style='width:24px'></span>"}<span>${item.text}</span>`;
+    li.onclick=()=>{
+      if(isSelected){qs.orderSelected=qs.orderSelected.filter(x=>x!==i)}
+      else{qs.orderSelected.push(i)}
+      renderOrderItems();
+    };
+    list.appendChild(li);
+  });
+}
+
+function submitAnswer(){
+  const qs=state.quizState;
+  if(!qs||qs.answered)return;
+  const q=qs.questions[qs.index];
+  let isCorrect=false;
+
+  if(q.type==="choice"){
+    if(qs.selectedChoice===null)return;
+    isCorrect=qs.selectedChoice===q.answer;
+    const choicesDiv=document.getElementById("q-choices");
+    const btns=choicesDiv.querySelectorAll(".choice-btn");
+    btns.forEach((btn,i)=>{
+      const ci=qs.shuffledChoices[i];
+      if(ci===q.answer)btn.classList.add("correct-answer");
+      else if(ci===qs.selectedChoice&&!isCorrect)btn.classList.add("wrong-answer");
+      btn.style.pointerEvents="none";
+    });
+  }else if(q.type==="text"){
+    const input=document.getElementById("q-input");
+    const val=input.value;
+    if(!val.trim())return;
+    isCorrect=checkTextAnswer(val,q.acceptableAnswers);
+    input.className="text-input "+(isCorrect?"correct-input":"wrong-input");
+    input.readOnly=true;
+  }else if(q.type==="order"){
+    if(qs.orderSelected.length!==qs.orderItems.length)return;
+    const userOrder=qs.orderSelected.map(i=>qs.orderItems[i].origIndex);
+    isCorrect=JSON.stringify(userOrder)===JSON.stringify(q.answer);
+  }
+
+  qs.answered=true;
+  if(isCorrect)qs.correct++;else qs.wrong++;
+
+  // Show explanation
+  const expDiv=document.getElementById("q-explanation");
+  const label=document.getElementById("exp-label");
+  label.innerHTML=isCorrect?'<span class="result-icon">&#10003;</span><span class="exp-correct">正解！</span>':'<span class="result-icon">&#10007;</span><span class="exp-wrong">不正解</span>';
+  let expText=q.explanation;
+  if(!isCorrect&&q.type==="text"){expText=`<b>正解:</b> ${q.acceptableAnswers[0]}<br><br>${q.explanation}`}
+  document.getElementById("exp-text").innerHTML=expText;
+  expDiv.classList.add("show");
+
+  document.getElementById("q-submit").style.display="none";
+  document.getElementById("q-next").style.display="block";
+
+  // Save progress
+  const prog=getProgress();
+  if(!prog.answers[q.id])prog.answers[q.id]={correct:0,wrong:0,lastDate:"",lastResult:false};
+  if(isCorrect)prog.answers[q.id].correct++;else prog.answers[q.id].wrong++;
+  prog.answers[q.id].lastDate=new Date().toISOString().slice(0,10);
+  prog.answers[q.id].lastResult=isCorrect;
+  updateStreak(prog);
+  saveProgress(prog);
+}
+
+function nextQuestion(){
+  const qs=state.quizState;
+  if(qs.index<qs.questions.length-1){
+    qs.index++;
+    renderQuestion();
+  }else{
+    showQuizResult();
+  }
+}
+
+function showQuizResult(){
+  document.getElementById("quiz-active").style.display="none";
+  document.getElementById("quiz-result").style.display="block";
+  const qs=state.quizState;
+  const total=qs.correct+qs.wrong;
+  const pct=total?Math.round(qs.correct/total*100):0;
+  document.getElementById("result-score").textContent=pct+"%";
+  document.getElementById("rb-correct").textContent=qs.correct;
+  document.getElementById("rb-wrong").textContent=qs.wrong;
+  document.getElementById("rb-total").textContent=total;
+  let label="";
+  if(pct>=90)label="素晴らしい！この分野はほぼ完璧です";
+  else if(pct>=70)label="いい調子！間違えた問題を復習しましょう";
+  else if(pct>=50)label="もう少し！教材を見直してから再挑戦を";
+  else label="まずは教材で基礎を固めましょう";
+  document.getElementById("result-label").textContent=label;
+
+  // Save session
+  const prog=getProgress();
+  prog.sessions.push({date:new Date().toISOString().slice(0,10),level:qs.currentLevel,total,correct:qs.correct});
+  if(prog.sessions.length>20)prog.sessions=prog.sessions.slice(-20);
+  saveProgress(prog);
+}
+
+function retryQuiz(){
+  if(state.quizState){
+    const lk=state.quizState.currentLevel;
+    if(lk)startQuizForLevel(lk);
+    else showQuizSelect();
+  }
+}
+
+// ============================================================
+// REVIEW MODE
+// ============================================================
+function renderReview(){
+  const prog=getProgress();
+  const allQ=getAllQuestions();
+  const wrongQs=allQ.filter(q=>{const a=prog.answers[q.id];return a&&a.wrong>0});
+  const lowAccQs=allQ.filter(q=>{const acc=getAccuracy(q.id,prog);return acc!==null&&acc<0.7});
+  const reviewPool=[...new Map([...wrongQs,...lowAccQs].map(q=>[q.id,q])).values()];
+
+  const stats=document.getElementById("review-stats");
+  stats.innerHTML=`<div style="font-size:14px">復習対象: <b>${reviewPool.length}問</b>（間違えた問題+正答率70%未満）</div>`;
+  document.getElementById("review-start-btn").disabled=reviewPool.length===0;
+  if(reviewPool.length===0)stats.innerHTML+='<div style="margin-top:8px;font-size:13px;color:var(--text-sub)">復習する問題がありません。テストを受けてみましょう</div>';
+}
+
+function startReview(){
+  const prog=getProgress();
+  const allQ=getAllQuestions();
+  const wrongQs=allQ.filter(q=>{const a=prog.answers[q.id];return a&&a.wrong>0});
+  const lowAccQs=allQ.filter(q=>{const acc=getAccuracy(q.id,prog);return acc!==null&&acc<0.7});
+  const reviewPool=[...new Map([...wrongQs,...lowAccQs].map(q=>[q.id,q])).values()];
+  // Prioritize recent wrong
+  reviewPool.sort((a,b)=>{
+    const aA=prog.answers[a.id],bA=prog.answers[b.id];
+    if(aA?.lastResult===false&&bA?.lastResult!==false)return-1;
+    if(bA?.lastResult===false&&aA?.lastResult!==false)return 1;
+    return(getAccuracy(a.id,prog)||0)-(getAccuracy(b.id,prog)||0);
+  });
+  const selected=reviewPool.slice(0,10);
+  if(selected.length>0){
+    switchScreen("quiz");
+    startQuiz(selected);
+  }
+}
+
+// ============================================================
+// PROGRESS PAGE
+// ============================================================
+function renderProgressPage(){
+  const prog=getProgress();
+  const allQ=getAllQuestions();
+
+  // Status counts
+  let mastered=0,learning=0,untouched=0;
+  allQ.forEach(q=>{
+    const s=getQuestionStatus(q.id,prog);
+    if(s==="mastered")mastered++;else if(s==="learning")learning++;else untouched++;
+  });
+  document.getElementById("stat-mastered").textContent=mastered;
+  document.getElementById("stat-learning").textContent=learning;
+  document.getElementById("stat-untouched").textContent=untouched;
+
+  // Category progress
+  const catDiv=document.getElementById("cat-progress-list");
+  catDiv.innerHTML="";
+  for(const[lk,lv]of Object.entries(QUIZ_DATA)){
+    for(const[ck,qs]of Object.entries(lv.categories)){
+      let total=0,correct=0;
+      qs.forEach(q=>{const a=prog.answers[q.id];if(a){total+=a.correct+a.wrong;correct+=a.correct}});
+      const pct=total?Math.round(correct/total*100):0;
+      const color=lv.color;
+      catDiv.innerHTML+=`<div class="cat-progress-item"><span class="cp-name">${ck}</span><div class="cp-bar"><div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${color}"></div></div></div><span class="cp-pct">${total?pct+"%":"--"}</span></div>`;
+    }
+  }
+
+  // History chart
+  const sessions=prog.sessions.slice(-10);
+  const ctx=document.getElementById("history-chart").getContext("2d");
+  if(state.historyChart)state.historyChart.destroy();
+  if(sessions.length>0){
+    state.historyChart=new Chart(ctx,{type:"line",data:{
+      labels:sessions.map((_,i)=>`#${i+1}`),
+      datasets:[{data:sessions.map(s=>s.total?Math.round(s.correct/s.total*100):0),borderColor:"#0170B9",backgroundColor:"rgba(1,112,185,0.1)",fill:true,tension:0.3,pointRadius:4,pointBackgroundColor:"#0170B9"}]
+    },options:{responsive:true,maintainAspectRatio:false,scales:{y:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}},x:{display:true}},plugins:{legend:{display:false}}}});
+  }
+}
+
+// ============================================================
+// INIT
+// ============================================================
+renderDashboard();
+</script>
+</body>
+</html>
