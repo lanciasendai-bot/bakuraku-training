@@ -71,6 +71,12 @@ a{color:var(--primary);text-decoration:none}
 .weak-pct{font-weight:500}
 .recommend-card{background:var(--primary-light);border:none;cursor:pointer;transition:background .15s}
 .recommend-card:hover{background:#d0eaf8}
+.resource-list{display:flex;flex-direction:column;gap:6px}
+.resource-item{display:flex;align-items:center;gap:10px;padding:12px;border-radius:8px;text-decoration:none;color:var(--text);background:var(--bg);transition:background .15s;border:1px solid var(--border)}
+.resource-item:hover{background:var(--primary-light);border-color:var(--primary)}
+.resource-tag{font-size:11px;font-weight:600;color:var(--primary);background:#e0f0fa;padding:2px 8px;border-radius:4px;white-space:nowrap;flex-shrink:0}
+.resource-name{font-size:13px;flex:1;line-height:1.4}
+.resource-icon{flex-shrink:0;color:var(--text-muted);font-size:14px}
 
 /* Study */
 .study-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
@@ -183,6 +189,11 @@ ruby rt{font-size:0.55em;color:var(--text-sub);font-weight:400}
     <div class="card recommend-card" id="recommend-card" onclick="goToRecommend()">
       <div class="card-header" style="color:var(--primary)">今日のおすすめ学習</div>
       <div id="recommend-text" style="font-size:15px;font-weight:500"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">製品資料</div>
+      <div class="resource-list" id="resource-list"></div>
     </div>
   </div>
 
@@ -308,6 +319,20 @@ ruby rt{font-size:0.55em;color:var(--text-sub);font-weight:400}
 </nav>
 
 <script>
+// ============================================================
+// PRODUCT RESOURCES
+// ============================================================
+const RESOURCES=[
+  {name:"5分でわかるバクラクシリーズ総まとめ",url:"https://go.bakuraku.jp/5minute-bakuraku-summarize",tag:"総合"},
+  {name:"バクラク請求書受取 サービス紹介資料",url:"https://go.bakuraku.jp/invoice-pamphlet_invoice",tag:"請求書受取"},
+  {name:"バクラク経費精算 サービス紹介資料",url:"https://go.bakuraku.jp/pamphlet_expense",tag:"経費精算"},
+  {name:"バクラク申請 サービス紹介資料",url:"https://go.bakuraku.jp/pamphlet_workflow",tag:"申請"},
+  {name:"バクラク電子帳簿保存 サービス紹介資料",url:"https://go.bakuraku.jp/pamphlet_box",tag:"電子帳簿保存"},
+  {name:"バクラクビジネスカード サービス紹介資料",url:"https://go.bakuraku.jp/card_introduction_material",tag:"ビジネスカード"},
+  {name:"バクラク請求書発行 サービス紹介資料",url:"https://go.bakuraku.jp/pamphlet_doc-issue",tag:"請求書発行"},
+  {name:"バクラク勤怠 サービス紹介資料",url:"https://go.bakuraku.jp/attendance_pre-information_a_2410",tag:"勤怠"},
+];
+
 // ============================================================
 // QUIZ DATA (~230 questions)
 // ============================================================
@@ -777,6 +802,10 @@ function renderDashboard(){
     recText.textContent="まずは初級の教材から始めましょう →";
     document.getElementById("recommend-card").onclick=()=>{switchScreen("study")};
   }
+
+  // Resources
+  const resList=document.getElementById("resource-list");
+  resList.innerHTML=RESOURCES.map(r=>`<a class="resource-item" href="${r.url}" target="_blank" rel="noopener"><span class="resource-tag">${r.tag}</span><span class="resource-name">${r.name}</span><span class="resource-icon">&#x2197;</span></a>`).join("");
 }
 
 function goToRecommend(){/* handled by onclick override */}
