@@ -698,7 +698,13 @@ function switchScreen(name){
   state.currentScreen=name;
   if(name==="dash")renderDashboard();
   if(name==="study")showStudyHome();
-  if(name==="quiz")showQuizSelect();
+  if(name==="quiz"){
+    if(state.quizState&&state.quizState.index<state.quizState.questions.length){
+      document.getElementById("quiz-select").style.display="none";
+      document.getElementById("quiz-active").style.display="block";
+      document.getElementById("quiz-result").style.display="none";
+    }else{showQuizSelect()}
+  }
   if(name==="review")renderReview();
   if(name==="progress")renderProgressPage();
 }
