@@ -1000,7 +1000,7 @@ function renderQuestion(){
   }else if(q.type==="text"){
     document.getElementById("q-text-input").style.display="block";
     const input=document.getElementById("q-input");
-    input.value="";input.className="text-input";input.focus();
+    input.value="";input.className="text-input";input.readOnly=false;input.focus();
     input.onkeydown=(e)=>{if(e.key==="Enter")submitAnswer()};
   }else if(q.type==="order"){
     document.getElementById("q-order").style.display="block";
