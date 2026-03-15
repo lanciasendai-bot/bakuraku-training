@@ -191,6 +191,40 @@ ruby rt{font-size:0.55em;color:var(--text-sub);font-weight:400}
 .flow-map-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;font-size:13px}
 .flow-map-box{background:var(--primary);color:#fff;padding:6px 12px;border-radius:6px;font-weight:500;text-align:center;min-width:80px}
 .flow-map-arrow{color:var(--text-sub);font-weight:700}
+
+/* Flow sub-tabs */
+.flow-tabs{display:flex;gap:4px;margin-bottom:16px;background:var(--bg-section);border-radius:8px;padding:3px}
+.flow-tab{flex:1;padding:8px 4px;border:none;background:none;border-radius:6px;font-size:13px;font-weight:500;font-family:inherit;cursor:pointer;color:var(--text-sub);transition:all .15s;-webkit-tap-highlight-color:transparent}
+.flow-tab.active{background:var(--bg);color:var(--primary);box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.flow-tab-content{display:none}.flow-tab-content.active{display:block}
+
+/* Product mapping */
+.pm-row{display:flex;align-items:flex-start;gap:12px;padding:14px 0;border-bottom:1px solid var(--border);font-size:13px}
+.pm-row:last-child{border-bottom:none}
+.pm-step{font-weight:600;min-width:90px;flex-shrink:0;color:var(--text)}
+.pm-before{flex:1;color:var(--text-sub);line-height:1.5}
+.pm-after{flex:1;color:var(--primary);font-weight:500;line-height:1.5}
+.pm-target{margin-top:12px;background:var(--bg-section);border-radius:8px;padding:12px 16px;font-size:13px;line-height:1.6}
+.pm-target-label{font-weight:700;font-size:12px;color:var(--l3);margin-bottom:4px}
+.pm-header-row{display:flex;gap:12px;padding:8px 0;border-bottom:2px solid var(--border);font-size:12px;font-weight:700;color:var(--text-sub)}
+.pm-header-row span{flex:1}.pm-header-row span:first-child{min-width:90px;flex:none}
+
+/* Combo cards */
+.combo-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:10px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.combo-title{font-size:14px;font-weight:700;margin-bottom:8px;color:var(--text)}
+.combo-flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.combo-product{background:var(--primary);color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;font-weight:600}
+.combo-product.secondary{background:var(--l2)}
+.combo-arrow{color:var(--text-sub);font-size:14px;font-weight:700}
+.combo-effect{font-size:13px;color:var(--text-sub);line-height:1.6}
+.combo-section-title{font-size:16px;font-weight:700;margin:20px 0 12px;padding-bottom:8px;border-bottom:2px solid var(--primary)}
+.combo-section-title:first-child{margin-top:0}
+.combo-approach{background:var(--bg-section);border-radius:12px;padding:20px;margin-top:20px}
+.combo-approach-title{font-size:15px;font-weight:700;margin-bottom:12px;color:var(--primary)}
+.combo-approach-steps{position:relative;padding-left:24px}
+.combo-approach-step{position:relative;padding:8px 0 8px 16px;border-left:2px solid var(--primary);font-size:13px;line-height:1.6}
+.combo-approach-step:last-child{border-left:2px solid transparent}
+.combo-approach-step::before{content:"";position:absolute;left:-7px;top:12px;width:12px;height:12px;border-radius:50%;background:var(--primary);border:2px solid var(--bg)}
 </style>
 </head>
 <body>
@@ -315,34 +349,49 @@ ruby rt{font-size:0.55em;color:var(--text-sub);font-weight:400}
   <!-- Flow -->
   <div id="screen-flow" class="screen">
     <div style="font-size:20px;font-weight:700;margin-bottom:4px">業務フロー</div>
-    <div style="font-size:13px;color:var(--text-sub);margin-bottom:16px">バックオフィス業務の全体像と各業務の詳細フロー</div>
+    <div style="font-size:13px;color:var(--text-sub);margin-bottom:12px">バックオフィス業務の全体像と各業務の詳細フロー</div>
 
-    <div class="flow-map">
-      <div class="flow-map-title">バックオフィス全体マップ</div>
-      <div class="flow-map-row">
-        <span class="flow-map-box">請求書受取</span><span class="flow-map-arrow">&rarr;</span>
-        <span class="flow-map-box">仕訳起票</span><span class="flow-map-arrow">&rarr;</span>
-        <span class="flow-map-box">会計記帳</span><span class="flow-map-arrow">&rarr;</span>
-        <span class="flow-map-box">月次決算</span>
-      </div>
-      <div class="flow-map-row">
-        <span class="flow-map-box">請求書発行</span><span class="flow-map-arrow">&rarr;</span>
-        <span class="flow-map-box">売上計上</span><span class="flow-map-arrow">&nearr;</span>
-        <span style="min-width:80px"></span>
-        <span class="flow-map-arrow">&darr;</span>
-      </div>
-      <div class="flow-map-row">
-        <span class="flow-map-box">経費精算</span><span class="flow-map-arrow">&rarr;</span>
-        <span class="flow-map-box">費用計上</span><span class="flow-map-arrow">&nearr;</span>
-        <span style="min-width:80px"></span>
-        <span class="flow-map-box">年次決算</span>
-      </div>
-      <div class="flow-map-row" style="margin-top:8px;font-size:12px;color:var(--text-sub)">
-        稟議・承認 = 各業務の実行トリガー / 電帳法 = 全書類の保管ルール
-      </div>
+    <div class="flow-tabs">
+      <button class="flow-tab active" data-ftab="flows" onclick="switchFlowTab('flows')">業務フロー</button>
+      <button class="flow-tab" data-ftab="products" onclick="switchFlowTab('products')">製品マッピング</button>
+      <button class="flow-tab" data-ftab="combos" onclick="switchFlowTab('combos')">組み合わせ提案</button>
     </div>
 
-    <div class="flow-list" id="flow-list"></div>
+    <div id="ftab-flows" class="flow-tab-content active">
+      <div class="flow-map">
+        <div class="flow-map-title">バックオフィス全体マップ</div>
+        <div class="flow-map-row">
+          <span class="flow-map-box">請求書受取</span><span class="flow-map-arrow">&rarr;</span>
+          <span class="flow-map-box">仕訳起票</span><span class="flow-map-arrow">&rarr;</span>
+          <span class="flow-map-box">会計記帳</span><span class="flow-map-arrow">&rarr;</span>
+          <span class="flow-map-box">月次決算</span>
+        </div>
+        <div class="flow-map-row">
+          <span class="flow-map-box">請求書発行</span><span class="flow-map-arrow">&rarr;</span>
+          <span class="flow-map-box">売上計上</span><span class="flow-map-arrow">&nearr;</span>
+          <span style="min-width:80px"></span>
+          <span class="flow-map-arrow">&darr;</span>
+        </div>
+        <div class="flow-map-row">
+          <span class="flow-map-box">経費精算</span><span class="flow-map-arrow">&rarr;</span>
+          <span class="flow-map-box">費用計上</span><span class="flow-map-arrow">&nearr;</span>
+          <span style="min-width:80px"></span>
+          <span class="flow-map-box">年次決算</span>
+        </div>
+        <div class="flow-map-row" style="margin-top:8px;font-size:12px;color:var(--text-sub)">
+          稟議・承認 = 各業務の実行トリガー / 電帳法 = 全書類の保管ルール
+        </div>
+      </div>
+      <div class="flow-list" id="flow-list"></div>
+    </div>
+
+    <div id="ftab-products" class="flow-tab-content">
+      <div class="flow-list" id="product-list"></div>
+    </div>
+
+    <div id="ftab-combos" class="flow-tab-content">
+      <div id="combo-list"></div>
+    </div>
   </div>
 
   <!-- Progress -->
@@ -904,6 +953,148 @@ function renderFlowPage(){
 function toggleFlow(id){
   const card=document.getElementById("flow-"+id);
   card.classList.toggle("open");
+}
+
+function switchFlowTab(tab){
+  document.querySelectorAll(".flow-tab").forEach(t=>t.classList.toggle("active",t.dataset.ftab===tab));
+  document.querySelectorAll(".flow-tab-content").forEach(c=>c.classList.toggle("active",c.id==="ftab-"+tab));
+  if(tab==="products")renderProductMap();
+  if(tab==="combos")renderComboList();
+}
+
+// ============================================================
+// PRODUCT MAPPING DATA
+// ============================================================
+const PRODUCT_MAP=[
+{id:"pm-receive",title:"バクラク請求書受取",color:"var(--l1)",
+rows:[
+{step:"受領",before:"メール・郵送・PDFがバラバラで管理不能",after:"受領代行で全チャネルを一元化"},
+{step:"内容チェック",before:"目視で金額・税率・インボイス番号を確認",after:"AI-OCRで自動読取。インボイス番号を国税庁DBと自動照合"},
+{step:"仕訳起票",before:"ベテランの頭にしかない科目判断",after:"パーソナライズドAIが仕訳を自動推薦（学習型）"},
+{step:"支払処理",before:"FBデータを手作成（1文字ミスで誤送金）",after:"全銀フォーマットのFBデータを自動生成"},
+{step:"会計連携",before:"CSVで手動取り込み",after:"freee/MF/奉行等12種以上とAPI連携"}
+],
+target:"月100枚以上の請求書を処理 / 手入力で仕訳 / 経理が少人数で属人化"
+},
+{id:"pm-issue",title:"バクラク請求書発行",color:"var(--l2)",
+rows:[
+{step:"請求書作成",before:"Excel/Wordで1枚ずつ手作成",after:"テンプレートから作成。CSV一括作成にも対応"},
+{step:"インボイス対応",before:"記載要件（T番号・税率別税額）の漏れ",after:"必須項目が自動セットされ記載漏れゼロ"},
+{step:"送付",before:"印刷→封入→郵送。月1,000件で年240〜360万円",after:"メール送付（無料）+ 郵送代行"},
+{step:"入金管理",before:"入金一覧と請求一覧を目視で突合",after:"ステータス管理で未入金を可視化"}
+],
+target:"月の請求件数が多い / 郵送コストを削減したい / インボイス対応が不安"
+},
+{id:"pm-expense",title:"バクラク経費精算",color:"var(--l3)",
+rows:[
+{step:"証憑取得",before:"紙のレシートを保管→紛失リスク",after:"スマホ撮影でその場でデータ化"},
+{step:"申請入力",before:"Excelに手入力（日付・金額・科目）",after:"AI-OCRが領収書から自動入力。科目も自動推薦"},
+{step:"承認",before:"紙回覧 or メール。誰で止まってるか不明",after:"アプリ上で承認状況を可視化。Slack通知"},
+{step:"経理チェック",before:"1件ずつ証憑と突合、差戻し対応",after:"AI自動チェックで不備を事前検出"},
+{step:"会計連携",before:"精算データをCSVで手取込",after:"API連携で自動反映"}
+],
+target:"Excel経費精算 / 立替精算の不満が多い / 差戻しが頻発"
+},
+{id:"pm-workflow",title:"バクラク申請",color:"var(--l4)",
+rows:[
+{step:"起案",before:"何をどう書けばいいか分からず不備だらけ",after:"項目タイプ10種以上でフォームを構造化。AI申請レビュー"},
+{step:"承認ルート",before:"金額ごとのルート管理が手動",after:"金額条件で承認経路を自動分岐"},
+{step:"承認実行",before:"紙回覧で出張中に止まる",after:"Slackからログイン不要で承認。モバイル対応"},
+{step:"証跡管理",before:"紙のキャビネットに保管。検索に数日",after:"全履歴がデジタルで残る。監査対応も即座"}
+],
+target:"紙の稟議 / テレワーク導入中 / IPO準備中（内部統制整備が必須）"
+},
+{id:"pm-storage",title:"バクラク電子帳簿保存",color:"var(--l1)",
+rows:[
+{step:"改ざん防止",before:"タイムスタンプの個別付与が手間",after:"訂正削除履歴が自動で残るシステム（JIIMA認証済み）"},
+{step:"検索要件",before:"ファイル名を手動リネーム",after:"AI-OCRで取引日・金額・取引先を自動インデックス化"},
+{step:"保管",before:"紙のファイリング+キャビネット管理",after:"クラウドで7年保管。物理スペース不要"},
+{step:"監査対応",before:"「あの書類どこ？」で数日かかる",after:"3項目検索で1分以内に発見"}
+],
+target:"電帳法対応が未着手 / 紙の保管コストが高い / 税務調査で指摘を受けた"
+},
+{id:"pm-card",title:"バクラクビジネスカード",color:"var(--l2)",
+rows:[
+{step:"経費の発生",before:"従業員が自分のお金で立替",after:"法人カードで決済。立替自体がゼロに"},
+{step:"証憑管理",before:"領収書を月末にまとめて提出→紛失",after:"決済と同時に通知。その場で撮影→報告"},
+{step:"明細突合",before:"カード明細とレシートを1件ずつ照合",after:"バクラク経費精算と自動連携。突合不要"},
+{step:"予算管理",before:"月末まで利用状況が分からない",after:"リアルタイムで可視化。カードごとに上限設定"}
+],
+target:"立替精算が多い / 小口現金を管理している / 経費の不正利用が心配"
+},
+{id:"pm-attendance",title:"バクラク勤怠",color:"var(--l3)",
+rows:[
+{step:"打刻",before:"タイムカード or Excel手入力",after:"PC/スマホから打刻。GPS対応で直行直帰も管理"},
+{step:"集計",before:"月末にExcelで手動集計",after:"自動集計。残業・深夜・休日を自動判定"},
+{step:"36協定",before:"上限超過を見落とすリスク",after:"アラートで上限接近を自動通知"},
+{step:"給与連携",before:"勤怠データを給与ソフトに手入力",after:"データ連携で転記ミスゼロ"}
+],
+target:"Excel勤怠管理 / テレワーク・直行直帰が多い / 36協定の管理が不安"
+},
+{id:"pm-ar",title:"バクラク債権管理",color:"var(--l4)",
+rows:[
+{step:"入金確認",before:"通帳を見て1件ずつ確認",after:"入金データを自動取得"},
+{step:"消込",before:"振込名義の表記揺れで突合に時間がかかる",after:"AI自動マッチングで消込。表記揺れにも対応"},
+{step:"未入金管理",before:"Excelで督促リスト管理",after:"未入金を自動検知。催促タイミングを通知"},
+{step:"残高管理",before:"得意先別の残高をExcelで集計",after:"リアルタイムで残高を可視化"}
+],
+target:"入金消込に時間がかかる / 未入金の発見が遅い / 売掛金の管理が属人化"
+}
+];
+
+const COMBO_DATA=[
+{situation:"請求書の手入力が大変",first:["請求書受取"],second:["電子帳簿保存"],effect:"受取→仕訳→保管の自動化。AI-OCR+AI仕訳推薦で手入力をほぼゼロに"},
+{situation:"経費精算が紙/Excel",first:["経費精算","ビジネスカード"],second:["電子帳簿保存"],effect:"立替ゼロ+証憑保管。9ステップ→4ステップに短縮"},
+{situation:"紙の稟議で承認が遅い",first:["申請"],second:["請求書受取"],effect:"稟議→支払の一気通貫。Slackからログイン不要で承認"},
+{situation:"電帳法対応が未着手",first:["電子帳簿保存"],second:["請求書受取"],effect:"法令対応+業務効率化を同時に実現。JIIMA認証で安心"},
+{situation:"請求書の郵送コストが高い",first:["請求書発行"],second:["債権管理"],effect:"発行→入金消込まで自動化。月1,000件で年間240万円削減"},
+{situation:"IPO準備中",first:["申請","電子帳簿保存"],second:["請求書受取","経費精算"],effect:"内部統制の整備。承認証跡+証憑管理で上場審査に対応"},
+{situation:"全部まるっと効率化したい",first:["請求書受取","経費精算","申請"],second:["ビジネスカード","電子帳簿保存"],effect:"フル一気通貫。製品間でデータが自動連携し二重入力ゼロ"}
+];
+
+function renderProductMap(){
+  const list=document.getElementById("product-list");
+  if(list.children.length>0)return;
+  list.innerHTML=PRODUCT_MAP.map(p=>{
+    const rowsHtml=`<div class="pm-header-row"><span>ステップ</span><span>従来の課題</span><span>バクラクで解決</span></div>`+
+      p.rows.map(r=>`<div class="pm-row"><span class="pm-step">${r.step}</span><span class="pm-before">${r.before}</span><span class="pm-after">${r.after}</span></div>`).join("");
+    const targetHtml=`<div class="pm-target"><div class="pm-target-label">刺さる企業</div>${p.target}</div>`;
+    return `<div class="flow-card" id="${p.id}">
+      <div class="flow-card-header" onclick="document.getElementById('${p.id}').classList.toggle('open')">
+        <div class="flow-card-icon" style="background:${p.color}20;color:${p.color}"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z"/></svg></div>
+        <div class="flow-card-info"><div class="flow-card-title">${p.title}</div><div class="flow-card-desc">${p.rows.length}ステップの課題を解決</div></div>
+        <div class="flow-card-arrow">&#9654;</div>
+      </div>
+      <div class="flow-card-body">${rowsHtml}${targetHtml}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderComboList(){
+  const el=document.getElementById("combo-list");
+  if(el.children.length>0)return;
+  let html=`<div class="combo-section-title">企業の状況別おすすめ組み合わせ</div>`;
+  html+=COMBO_DATA.map(c=>{
+    const firstHtml=c.first.map(p=>`<span class="combo-product">${p}</span>`).join("");
+    const secondHtml=c.second.map(p=>`<span class="combo-product secondary">${p}</span>`).join("");
+    return `<div class="combo-card">
+      <div class="combo-title">${c.situation}</div>
+      <div class="combo-flow">${firstHtml}<span class="combo-arrow">&rarr;</span>${secondHtml}</div>
+      <div class="combo-effect">${c.effect}</div>
+    </div>`;
+  }).join("");
+  html+=`<div class="combo-approach">
+    <div class="combo-approach-title">ISとしての提案の組み立て方</div>
+    <div class="combo-approach-steps">
+      <div class="combo-approach-step"><b>Step1:</b> ヒアリングで「一番痛い業務」を特定</div>
+      <div class="combo-approach-step"><b>Step2:</b> そのフローのどのステップが課題か深掘り</div>
+      <div class="combo-approach-step"><b>Step3:</b> 該当するバクラク製品1〜2個を提案（入口は小さく）</div>
+      <div class="combo-approach-step"><b>Step4:</b> 導入効果を数字で試算（工数 x 時給 x 12ヶ月）</div>
+      <div class="combo-approach-step"><b>Step5:</b> 成功したら隣接する業務フローにも横展開</div>
+    </div>
+    <div class="flow-point" style="margin-top:16px"><div class="flow-point-label">POINT</div>一度に8製品全部を提案しない。「一番痛いところ」から入って、効果を実感してもらってから広げる</div>
+  </div>`;
+  el.innerHTML=html;
 }
 
 document.querySelectorAll(".nav-item").forEach(btn=>{
