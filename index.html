@@ -159,6 +159,38 @@ a{color:var(--primary);text-decoration:none}
 /* Furigana (ruby) */
 ruby{ruby-align:center}
 ruby rt{font-size:0.55em;color:var(--text-sub);font-weight:400}
+
+/* Flow tab */
+.flow-list{display:flex;flex-direction:column;gap:10px}
+.flow-card{background:var(--bg);border:1px solid var(--border);border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.flow-card-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;transition:background .15s;gap:12px}
+.flow-card-header:hover{background:var(--bg-section)}
+.flow-card-icon{font-size:24px;flex-shrink:0;width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;background:var(--primary-light);color:var(--primary)}
+.flow-card-info{flex:1}
+.flow-card-title{font-size:15px;font-weight:700;margin-bottom:2px}
+.flow-card-desc{font-size:12px;color:var(--text-sub)}
+.flow-card-arrow{font-size:18px;color:var(--text-sub);transition:transform .2s;flex-shrink:0}
+.flow-card.open .flow-card-arrow{transform:rotate(90deg)}
+.flow-card-body{display:none;padding:0 20px 20px;border-top:1px solid var(--border)}
+.flow-card.open .flow-card-body{display:block}
+.flow-steps{position:relative;padding-left:24px}
+.flow-step{position:relative;padding:12px 0 12px 16px;border-left:2px solid var(--primary);font-size:14px;line-height:1.7}
+.flow-step:last-child{border-left:2px solid transparent}
+.flow-step::before{content:"";position:absolute;left:-7px;top:16px;width:12px;height:12px;border-radius:50%;background:var(--primary);border:2px solid var(--bg)}
+.flow-step-title{font-weight:700;font-size:14px;margin-bottom:4px;color:var(--primary)}
+.flow-step-detail{font-size:13px;color:var(--text-sub);line-height:1.6}
+.flow-step-detail ul{margin:4px 0 0 16px;padding:0;list-style:disc}
+.flow-step-detail li{margin-bottom:2px}
+.flow-bakuraku{display:inline-block;background:#E8F4FC;color:var(--primary);font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;margin-top:4px}
+.flow-point{background:var(--bg-section);border-radius:8px;padding:12px 16px;margin-top:12px;font-size:13px;line-height:1.6}
+.flow-point-label{font-weight:700;font-size:12px;color:var(--primary);margin-bottom:4px}
+.flow-section-title{font-size:13px;font-weight:700;color:var(--text-sub);margin:20px 0 8px;padding-bottom:4px;border-bottom:1px solid var(--border)}
+.flow-journal{background:#f8f9fa;border-radius:6px;padding:10px 14px;font-family:"Courier New",monospace;font-size:13px;margin:8px 0;line-height:1.6;border-left:3px solid var(--primary)}
+.flow-map{background:var(--bg-section);border-radius:12px;padding:20px;margin-bottom:16px}
+.flow-map-title{font-size:15px;font-weight:700;margin-bottom:12px;text-align:center}
+.flow-map-row{display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:6px;margin-bottom:8px;font-size:13px}
+.flow-map-box{background:var(--primary);color:#fff;padding:6px 12px;border-radius:6px;font-weight:500;text-align:center;min-width:80px}
+.flow-map-arrow{color:var(--text-sub);font-weight:700}
 </style>
 </head>
 <body>
@@ -280,6 +312,39 @@ ruby rt{font-size:0.55em;color:var(--text-sub);font-weight:400}
     </div>
   </div>
 
+  <!-- Flow -->
+  <div id="screen-flow" class="screen">
+    <div style="font-size:20px;font-weight:700;margin-bottom:4px">業務フロー</div>
+    <div style="font-size:13px;color:var(--text-sub);margin-bottom:16px">バックオフィス業務の全体像と各業務の詳細フロー</div>
+
+    <div class="flow-map">
+      <div class="flow-map-title">バックオフィス全体マップ</div>
+      <div class="flow-map-row">
+        <span class="flow-map-box">請求書受取</span><span class="flow-map-arrow">&rarr;</span>
+        <span class="flow-map-box">仕訳起票</span><span class="flow-map-arrow">&rarr;</span>
+        <span class="flow-map-box">会計記帳</span><span class="flow-map-arrow">&rarr;</span>
+        <span class="flow-map-box">月次決算</span>
+      </div>
+      <div class="flow-map-row">
+        <span class="flow-map-box">請求書発行</span><span class="flow-map-arrow">&rarr;</span>
+        <span class="flow-map-box">売上計上</span><span class="flow-map-arrow">&nearr;</span>
+        <span style="min-width:80px"></span>
+        <span class="flow-map-arrow">&darr;</span>
+      </div>
+      <div class="flow-map-row">
+        <span class="flow-map-box">経費精算</span><span class="flow-map-arrow">&rarr;</span>
+        <span class="flow-map-box">費用計上</span><span class="flow-map-arrow">&nearr;</span>
+        <span style="min-width:80px"></span>
+        <span class="flow-map-box">年次決算</span>
+      </div>
+      <div class="flow-map-row" style="margin-top:8px;font-size:12px;color:var(--text-sub)">
+        稟議・承認 = 各業務の実行トリガー / 電帳法 = 全書類の保管ルール
+      </div>
+    </div>
+
+    <div class="flow-list" id="flow-list"></div>
+  </div>
+
   <!-- Progress -->
   <div id="screen-progress" class="screen">
     <div style="font-size:20px;font-weight:700;margin-bottom:16px">進捗</div>
@@ -309,13 +374,13 @@ ruby rt{font-size:0.55em;color:var(--text-sub);font-weight:400}
     <svg viewBox="0 0 24 24"><path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z"/></svg>
     <span>教材</span>
   </button>
+  <button class="nav-item" data-screen="flow">
+    <svg viewBox="0 0 24 24"><path d="M22 11V3h-7v3H9V3H2v8h7V8h2v10h4v3h7v-8h-7v3h-2V8h2v3h7zM7 9H4V5h3v4zm10 6h3v4h-3v-4zm0-10h3v4h-3V5z"/></svg>
+    <span>フロー</span>
+  </button>
   <button class="nav-item" data-screen="quiz">
     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14h-2v-2h2v2zm2.07-7.75l-.9.92C12.45 10.9 12 11.5 12 13h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H7c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/></svg>
     <span>テスト</span>
-  </button>
-  <button class="nav-item" data-screen="review">
-    <svg viewBox="0 0 24 24"><path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
-    <span>復習</span>
   </button>
   <button class="nav-item" data-screen="progress">
     <svg viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/></svg>
@@ -446,6 +511,18 @@ level1:{name:"初級",sub:"経理の基礎用語",color:"var(--l1)",tagClass:"ta
 {id:"L1-083",type:"text",question:"電子帳簿保存法で求められる「検索要件」の3項目は？（1つ答えよ）",acceptableAnswers:["取引日","取引先","取引金額","とりひきび","とりひきさき","とりひききんがく"],explanation:"検索要件 = 取引日・取引先・取引金額の3項目で検索できる状態で保存すること。バクラクはAI-OCRで自動インデックス化"},
 {id:"L1-084",type:"choice",question:"タイムスタンプも訂正削除ログも事務処理規程もない状態で電子取引データを保存した場合どうなる？",choices:["改ざん防止の要件を満たさず、税務調査で否認されるリスク","特に問題ない","タイムスタンプは任意","保存自体ができない"],answer:0,explanation:"電帳法の改ざん防止措置には①タイムスタンプ付与、②訂正削除ログ保持、③事務処理規程の策定の3つがある。どれも取っていなければ保存要件を満たさず税務調査で否認されるリスクがある"},
 {id:"L1-085",type:"choice",question:"JIIMA認証ソフトを使うメリットは？",choices:["電帳法の保存要件を自動的にクリアでき、個別の要件チェックが不要","価格が安い","デザインがいい","海外でも使える"],answer:0,explanation:"JIIMA認証 = 公益社団法人日本文書情報マネジメント協会が「電帳法の要件を満たしている」と認証。自社で要件チェックする手間がなくなる"},
+],
+"勘定科目5分類":[
+{id:"L1-090",type:"choice",question:"勘定科目の5分類のうち「会社が持っているもの」を表すのは？",choices:["資産","負債","収益","費用"],answer:0,explanation:"資産 = 現金、売掛金、備品など会社が保有するもの。BS（貸借対照表）の左側に表示される"},
+{id:"L1-091",type:"choice",question:"勘定科目の5分類のうち「会社が払う義務」を表すのは？",choices:["負債","資産","費用","純資産"],answer:0,explanation:"負債 = 買掛金、借入金、未払金など。BSの右側（上部）に表示される"},
+{id:"L1-092",type:"choice",question:"「資産 - 負債」で求められるものは？",choices:["純資産","収益","費用","売上"],answer:0,explanation:"純資産 = 資本金＋利益剰余金。会社の正味の価値を表す"},
+{id:"L1-093",type:"choice",question:"「売上高」はどの分類に属する？",choices:["収益","資産","費用","負債"],answer:0,explanation:"収益 = 売上高、受取利息、雑収入など。PLの上部に表示される"},
+{id:"L1-094",type:"choice",question:"「外注費」「通信費」「人件費」はどの分類に属する？",choices:["費用","負債","資産","収益"],answer:0,explanation:"費用 = 事業活動で出ていくお金。PLの中段に表示される"},
+{id:"L1-095",type:"choice",question:"「前払費用」はどの分類に属する？",choices:["資産","費用","負債","収益"],answer:0,explanation:"前払費用 = 先に払ったがまだサービスを受けていない分。将来サービスを受ける権利があるため「資産」"},
+{id:"L1-096",type:"choice",question:"「未払金」はどの分類に属する？",choices:["負債","資産","費用","純資産"],answer:0,explanation:"未払金 = まだ払っていないお金。クレカの引落前や経費精算の振込前など"},
+{id:"L1-097",type:"choice",question:"「普通預金」はどの分類に属する？",choices:["資産","負債","収益","費用"],answer:0,explanation:"普通預金 = 銀行口座のお金。会社が持っている（＝資産）"},
+{id:"L1-098",type:"choice",question:"「預り金」はどの分類に属する？",choices:["負債","資産","費用","収益"],answer:0,explanation:"預り金 = 源泉所得税や住民税など一時的に預かっているお金。いずれ支払う義務があるため「負債」"},
+{id:"L1-099",type:"choice",question:"10万円以上のPCを購入した場合、使う勘定科目は？",choices:["工具器具備品","消耗品費","通信費","支払手数料"],answer:0,explanation:"10万円以上は資産計上（工具器具備品）して耐用年数4年で減価償却する。10万円未満なら消耗品費"},
 ]}},
 level2:{name:"中級",sub:"業務フローの理解",color:"var(--l2)",tagClass:"tag-l2",categories:{
 "月次サイクル":[
@@ -526,6 +603,34 @@ level2:{name:"中級",sub:"業務フローの理解",color:"var(--l2)",tagClass:
 {id:"L2-081",type:"choice",question:"月末締め翌月末払いの場合、支払サイトは約何日？",choices:["約30日","約15日","約60日","約90日"],answer:0,explanation:"支払サイト = 締め日から実際の支払日までの日数。30日が最も一般的"},
 {id:"L2-082",type:"choice",question:"入金確認の際に照合するのは主にどの2つ？",choices:["請求書と通帳（入金明細）","請求書と納品書","見積書と請求書","契約書と通帳"],answer:0,explanation:"請求金額と実際の入金額が一致しているか確認。振込名義が異なると突合が難しい"},
 {id:"L2-083",type:"choice",question:"法人の書類保存義務期間は原則何年？",choices:["7年","5年","3年","10年"],answer:0,explanation:"法人は7年保存が原則。欠損金がある場合は10年保存が必要"},
+],
+"仕訳パターン":[
+{id:"L2-090",type:"choice",question:"SaaSの月額利用料3万円がクレカで引き落とされた時の貸方科目は？",choices:["未払金→普通預金","買掛金","現金","前払費用"],answer:0,explanation:"利用時: 支払手数料 30,000 / 未払金 30,000。引落時: 未払金 30,000 / 普通預金 30,000の2段階"},
+{id:"L2-091",type:"choice",question:"外注先（個人）に55万円の報酬を払う時、源泉徴収後の振込額は？",choices:["約49.4万円","55万円","50万円","約52万円"],answer:0,explanation:"源泉税（10.21%）= 55,630円を天引き。振込額 = 550,000 - 55,630 = 494,370円。源泉税は預り金として翌月10日までに納付"},
+{id:"L2-092",type:"choice",question:"年間12万円のSaaSを一括払いした時、支払時の借方科目は？",choices:["前払費用","支払手数料","消耗品費","未払金"],answer:0,explanation:"まだサービスを受けていない分は前払費用（資産）。毎月1万円ずつ支払手数料に振り替える"},
+{id:"L2-093",type:"choice",question:"給与30万円を支払う際、「預り金」に計上されるものは？",choices:["社会保険料・所得税・住民税","交通費","残業代","賞与"],answer:0,explanation:"給与から天引きする社保・税金は一時的に預かるお金（負債）。後日まとめて各機関に納付する"},
+{id:"L2-094",type:"choice",question:"15万円のPCを購入した場合の毎月の減価償却費は？（耐用年数4年・定額法）",choices:["約3,125円","約12,500円","約6,250円","約1,250円"],answer:0,explanation:"150,000円 ÷ 4年 ÷ 12ヶ月 = 3,125円/月。毎月この金額を減価償却費として費用計上する"},
+{id:"L2-095",type:"choice",question:"クライアントから着手金50万円を受け取った時の貸方科目は？",choices:["前受金","売上","売掛金","未収金"],answer:0,explanation:"まだサービスを提供していないので売上にできない。納品完了時に前受金→売上に振り替える"},
+{id:"L2-096",type:"choice",question:"売掛金110万円の入金があったが440円の振込手数料が差し引かれていた。不足分の勘定科目は？",choices:["支払手数料","雑損失","売上値引","未収金"],answer:0,explanation:"振込手数料は支払手数料で処理。普通預金 1,099,560 + 支払手数料 440 = 売掛金 1,100,000"},
+{id:"L2-097",type:"text",question:"現金が動いた時ではなく、取引が発生した時に記録する会計原則を何と呼ぶ？（漢字4文字）",acceptableAnswers:["発生主義","はっせいしゅぎ","ハッセイシュギ"],explanation:"発生主義 = 請求書を発行した日が売上計上日。入金日ではない点が重要"},
+{id:"L2-098",type:"choice",question:"消費税の計算式として正しいのは？",choices:["預かった消費税 - 払った消費税 = 納付額","売上 × 10% = 納付額","仕入 × 10% = 納付額","利益 × 10% = 納付額"],answer:0,explanation:"売上時に預かった消費税から、仕入時に払った消費税を差し引いた差額を納付する"},
+{id:"L2-099",type:"choice",question:"消費税の納税義務が発生する基準は？",choices:["課税売上1,000万円超","課税売上500万円超","課税売上3,000万円超","全事業者"],answer:0,explanation:"前々年度の課税売上が1,000万円を超えると消費税の課税事業者になる"},
+],
+"請求書受取の詳細フロー":[
+{id:"L2-100",type:"order",question:"請求書受取から支払完了までの流れを正しい順番に並べてください",items:["請求書の受領・登録","内容チェック（金額・インボイス番号）","承認フロー（担当→上長→経理）","仕訳起票（勘定科目・税区分を決定）","支払処理（FBデータ作成→振込）","消込・書類保管"],answer:[0,1,2,3,4,5],explanation:"受領→チェック→承認→仕訳→支払→消込の6ステップ。バクラクは受領・チェック・仕訳・支払・保管の5つに関わる"},
+{id:"L2-101",type:"choice",question:"請求書の内容チェックで確認すべき項目として不適切なものは？",choices:["取引先の従業員数","請求金額と発注内容の一致","インボイス登録番号（T+13桁）","消費税率（8%/10%）の正確性"],answer:0,explanation:"取引先の従業員数は請求書チェックの対象外。金額・インボイス番号・税率・支払期日・振込先を確認する"},
+{id:"L2-102",type:"choice",question:"「月末締め翌月末払い」の請求書で、1月分の支払日はいつ？",choices:["2月28日（末日）","1月31日","3月31日","2月15日"],answer:0,explanation:"1/1〜1/31の取引を1月末で締め、翌月末（2/28）に支払う。支払サイト約30日"},
+{id:"L2-103",type:"choice",question:"買掛金の消込仕訳で正しいのは？",choices:["借方:買掛金 / 貸方:普通預金","借方:普通預金 / 貸方:買掛金","借方:外注費 / 貸方:普通預金","借方:買掛金 / 貸方:売掛金"],answer:0,explanation:"支払ったので買掛金（負債）が減る = 借方。銀行口座（資産）が減る = 貸方"},
+{id:"L2-104",type:"choice",question:"仕訳起票時に決める必要がないものは？",choices:["取引先の決算月","勘定科目","部門コード","税区分"],answer:0,explanation:"仕訳で必要なのは勘定科目・部門コード・税区分・プロジェクトコードなど。取引先の決算月は不要"},
+{id:"L2-105",type:"choice",question:"振込データ（FBデータ）作成時に内部統制上求められることは？",choices:["作成者と承認者を分ける（ダブルチェック）","1人で完結させる","紙で印刷する","FAXで送る"],answer:0,explanation:"不正防止のため職務分掌が必要。同一人物が作成→承認→実行すると不正リスクが高まる"},
+],
+"月次決算の詳細フロー":[
+{id:"L2-110",type:"order",question:"月次決算の締め作業を正しい順番に並べてください",items:["売上の確定（当月分を全て計上）","費用の確定（未払計上・経費締切・給与計上）","残高照合（銀行残高と帳簿の一致確認）","試算表作成（BS/PLの月次版）","経営層への報告（予算比・前月比の差異分析）"],answer:[0,1,2,3,4],explanation:"売上確定→費用確定→残高照合→試算表→報告の5ステップ。日々の仕訳が正確なら締め作業は早く終わる"},
+{id:"L2-111",type:"choice",question:"月次決算の「残高照合」で使う書類は？",choices:["銀行勘定調整表","試算表","損益計算書","稟議書"],answer:0,explanation:"銀行の口座残高と帳簿上の普通預金残高を突合する。不一致がある場合は原因を調査する"},
+{id:"L2-112",type:"choice",question:"月次決算で「未払計上」が必要になるケースは？",choices:["サービスを受けたが請求書がまだ届いていない","既に支払い済みの取引","来月の取引","前期の取引"],answer:0,explanation:"発生主義に基づき、サービスを受けた月に費用計上する。請求書の到着を待たず見積額で計上する"},
+{id:"L2-113",type:"choice",question:"月次決算の試算表で異常値をチェックする方法は？",choices:["前月比・予算比で大きく乖離している科目を確認","全科目を1円単位で検算","紙に印刷して目視確認","チェックは不要"],answer:0,explanation:"前月比で急増・急減している科目は入力ミスや計上漏れの可能性がある。予算比も合わせて確認する"},
+{id:"L2-114",type:"choice",question:"「仮払金」「仮受金」が月次決算で残高として残っている場合、何を意味する？",choices:["未精算の取引がある（早急に精算が必要）","正常な状態","売上が増えている","負債が減っている"],answer:0,explanation:"仮勘定は一時的な科目。月を跨いで残ると決算書の正確性が損なわれるため早期に精算・振替する"},
+{id:"L2-115",type:"choice",question:"減価償却費の月次計上で正しい記述は？",choices:["固定資産の取得価額を耐用年数で割り、12で割った額を毎月計上","年末にまとめて計上","購入時に全額計上","売却時に計上"],answer:0,explanation:"月次決算では毎月均等額を費用計上する。年次でまとめると月次の損益が歪む"},
 ]
 }},
 level3:{name:"上級",sub:"課題理解と提案力",color:"var(--l3)",tagClass:"tag-l3",categories:{
@@ -668,6 +773,7 @@ const FURIGANA_MAP=[
   ["請求書","せいきゅうしょ"],["領収書","りょうしゅうしょ"],
   ["帳簿","ちょうぼ"],["摘要","てきよう"],["残高","ざんだか"],["元帳","もとちょう"],
   ["債権","さいけん"],["時効","じこう"],
+  ["発生主義","はっせいしゅぎ"],["前払費用","まえばらいひよう"],["銀行勘定調整表","ぎんこうかんじょうちょうせいひょう"],
 ];
 // 長い語を先にマッチさせるためソート
 FURIGANA_MAP.sort((a,b)=>b[0].length-a[0].length);
@@ -698,6 +804,108 @@ function saveProgress(p){localStorage.setItem("bk-progress",JSON.stringify(p))}
 // ============================================================
 // NAVIGATION
 // ============================================================
+// ============================================================
+// FLOW DATA
+// ============================================================
+const FLOW_DATA=[
+{id:"invoice-receive",icon:"<svg viewBox='0 0 24 24' width='20' height='20' fill='currentColor'><path d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z'/></svg>",
+title:"請求書受取（買掛金管理）",desc:"取引先からの請求書を受け取り、確認・承認・仕訳・支払・保管するまでの一連の流れ",
+steps:[
+{title:"受領・登録",detail:"取引先から請求書が届く（メール添付PDF / 郵送 / クラウド経由）。届いた日付を記録し、管理台帳に登録する",bakuraku:"バクラク請求書受取: AI-OCRで自動読取・データ化"},
+{title:"内容チェック",detail:"<ul><li>請求金額は発注内容・納品内容と一致しているか</li><li>消費税率は正しいか（8% / 10%）</li><li>インボイス登録番号（T+13桁）は記載されているか</li><li>支払期日・振込先口座情報は正しいか</li></ul>NGなら取引先に差戻し・再発行依頼",bakuraku:"バクラク: インボイス番号を国税庁DBと自動照合"},
+{title:"承認フロー",detail:"申請者（受領した担当者）→ 一次承認（課長）→ 二次承認（部長）※金額基準で分岐 → 最終承認（経理部長/CFO）",bakuraku:"バクラク申請: Slackからログイン不要で承認。金額に応じた経路自動分岐"},
+{title:"仕訳起票",detail:"経理が勘定科目を決めて仕訳を作成する。<br>部門コード・プロジェクトコード・税区分も設定。",journal:"借方: 外注費 330,000 / 貸方: 買掛金 330,000",bakuraku:"バクラク: パーソナライズドAIが仕訳を自動推薦（学習型）"},
+{title:"支払処理",detail:"支払日にまとめて振込。全銀フォーマットでFBデータを作成し、ネットバンキングで実行。<br><b>内部統制:</b> 作成者と承認者を必ず分ける（ダブルチェック）"},
+{title:"消込・保管",detail:"買掛金の消込（支払済みなので帳簿から減らす）。請求書原本を電帳法に沿って保管。",journal:"借方: 買掛金 330,000 / 貸方: 普通預金 330,000",bakuraku:"バクラク電子帳簿保存: タイムスタンプ自動付与・検索要件を自動充足"}
+],
+point:"支払サイトの例: 月末締め翌月末払い = 1/1〜1/31の請求 → 2/28に支払い"
+},
+{id:"invoice-issue",icon:"<svg viewBox='0 0 24 24' width='20' height='20' fill='currentColor'><path d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10H7v-2h10v2z'/></svg>",
+title:"請求書発行（売掛金管理）",desc:"サービス提供後の請求書作成から入金消込までの流れ",
+steps:[
+{title:"請求タイミング確認",detail:"納品完了 or 契約に基づく請求日。<br>パターン: 都度請求（納品ごと）/ 月次請求（毎月定額）/ マイルストーン請求（着手金50%→納品時50%）"},
+{title:"請求書作成",detail:"インボイス制度の記載必須項目:<ul><li>発行者の名称・登録番号（T+13桁）</li><li>取引年月日・取引内容</li><li>税率ごとに区分した対価の合計額</li><li>税率ごとの消費税額</li><li>受領者の名称</li></ul>",bakuraku:"バクラク請求書発行: テンプレートから作成。個別作成とCSV一括作成に対応"},
+{title:"社内承認・送付",detail:"営業担当 → 営業マネージャー → 経理の順でチェック。金額が契約書と一致しているか確認後、メール送付（PDF添付）or 郵送"},
+{title:"売上計上",detail:"サービス提供完了日 or 検収日で計上（発生主義）。<br><b>注意:</b> 請求書発行日ではなく、サービス提供日が計上日。",journal:"借方: 売掛金 550,000 / 貸方: 売上 550,000"},
+{title:"入金確認",detail:"支払期日前後に銀行口座を確認。入金がなければ催促（まず電話 → 書面）"},
+{title:"入金消込",detail:"入金額と請求額を突合。振込手数料が差し引かれている場合は支払手数料で処理。",journal:"借方: 普通預金 549,670 / 貸方: 売掛金 550,000<br>借方: 支払手数料 330",bakuraku:"バクラク債権管理: 消込作業を自動化。振込名義の表記揺れにも対応"}
+],
+point:"振込名義が社名と違う場合（旧社名、略称、個人名義など）は突合に時間がかかる。ここが経理の地味な負担ポイント"
+},
+{id:"expense",icon:"<svg viewBox='0 0 24 24' width='20' height='20' fill='currentColor'><path d='M20 4H4c-1.11 0-2 .89-2 2v12c0 1.1.89 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.11-.9-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z'/></svg>",
+title:"経費精算",desc:"従業員の立替払いから精算完了までの流れ",
+steps:[
+{title:"立替払い発生",detail:"従業員が業務で自分のお金を使う。<br>よくある経費: 交通費 / 交際費（取引先との会食）/ 会議費（1人5,000円以下）/ 消耗品費（10万円未満）/ 旅費交通費（出張）"},
+{title:"証憑取得",detail:"レシート or 領収書を受け取る。電子決済は利用明細スクショ。<br><b>注意:</b> 領収書がない場合は出金伝票を作成するが、税務調査で否認されるリスクあり"},
+{title:"申請",detail:"経費精算システムで申請。<br>記入項目: 日付・金額(税込)・勘定科目・用途/備考・証憑添付<br><br><b>交際費は追加記載:</b> 参加者名・人数・店名・金額",bakuraku:"バクラク経費精算: スマホ撮影→AI-OCR自動読取→申請書自動作成"},
+{title:"上長承認",detail:"業務上の妥当性チェック（本当に必要だったか）、金額の妥当性確認"},
+{title:"経理チェック",detail:"<ul><li>証憑と申請内容が一致しているか</li><li>勘定科目・消費税区分は正しいか</li><li>社内規程の上限を超えていないか</li><li>インボイス番号の確認</li></ul>NGなら差戻し（理由付き）"},
+{title:"精算実行・保管",detail:"給与と一緒に振込 or 別日に振込。証憑を電帳法に沿って保管。",journal:"申請承認時: 交際費 8,000 / 未払金 8,000<br>振込時: 未払金 8,000 / 普通預金 8,000"}
+],
+point:"バクラクビジネスカードを使えば立替自体が不要に。カード決済→利用報告→自動突合・仕訳→承認の4ステップに短縮（従来9ステップ→4ステップ）"
+},
+{id:"ringi",icon:"<svg viewBox='0 0 24 24' width='20' height='20' fill='currentColor'><path d='M18 11h-3V8c0-.55-.45-1-1-1h-4c-.55 0-1 .45-1 1v3H6c-.55 0-1 .45-1 1v4c0 .55.45 1 1 1h3v3c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-3h3c.55 0 1-.45 1-1v-4c0-.55-.45-1-1-1z'/></svg>",
+title:"稟議・ワークフロー",desc:"物品購入や契約締結前に上長の承認を得る手続き",
+steps:[
+{title:"起案",detail:"担当者が申請を作成。<br>稟議が必要な場面: SaaS契約・外注発注・物品購入（一定金額以上）・採用・出張・契約締結<br><br>記載内容: 件名・目的・金額（初期+ランニング）・代替案比較・期間・リスク"},
+{title:"承認ルート自動判定",detail:"金額別の承認ルート例（職務権限規程に基づく）:<ul><li>〜10万: 課長で完結</li><li>10万〜50万: 課長→部長</li><li>50万〜100万: 課長→部長→本部長</li><li>100万〜500万: 課長→部長→本部長→CFO</li><li>500万以上: 上記+取締役会</li></ul>",bakuraku:"バクラク申請: 金額条件で承認ルートを自動分岐"},
+{title:"回覧・承認",detail:"各承認者が確認し、承認 / 差戻し（修正理由付き）/ 却下を判断。<br>承認者不在の場合は代理承認（事前指定）",bakuraku:"バクラク: Slackから直接承認可能。テレワーク中でも止まらない"},
+{title:"決裁完了→実行",detail:"承認済みの稟議番号が発番される。この番号を使って発注・契約・支払を実行。稟議書は監査証跡として保管。<br><br><b>注意:</b> 稟議で100万と書いたのに実際120万かかった場合、差額分の追加稟議が必要"}
+],
+point:"紙の稟議だと承認者が出張中で完全に止まる。テレワーク時代の最大の阻害要因（44.7%が課題と回答）"
+},
+{id:"monthly-close",icon:"<svg viewBox='0 0 24 24' width='20' height='20' fill='currentColor'><path d='M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z'/></svg>",
+title:"月次決算",desc:"毎月の帳簿を締めて経営状況を把握する一連の作業",
+steps:[
+{title:"Step1: 売上の確定",detail:"当月の売上を全て計上したか確認。売掛金の残高確認。前受金の振替（入金済みだがまだ売上にしてないもの）"},
+{title:"Step2: 費用の確定",detail:"<ul><li>請求書が届いてないものも「未払計上」する（発生主義）</li><li>経費精算の締め切り</li><li>給与・社会保険料の計上</li><li>減価償却費の月次計上（固定資産を月割りで費用化）</li></ul>"},
+{title:"Step3: 残高照合",detail:"<ul><li>銀行残高と帳簿残高の一致確認（銀行勘定調整表）</li><li>売掛金の得意先別残高確認</li><li>買掛金の仕入先別残高確認</li><li>仮払金・仮受金が残ってないかチェック</li></ul>"},
+{title:"Step4: 試算表作成",detail:"BS（貸借対照表）とPL（損益計算書）の月次版を作成。前月比・予算比で異常値がないかチェックする"},
+{title:"Step5: 経営報告",detail:"経営層への月次報告。予算との差異分析・資金繰り見通しを提出。<br><br>優秀な企業は<b>5営業日以内</b>で締め。10営業日以上は改善余地大"}
+],
+point:"全ての業務フローが最終的に「会計（仕訳）」に集約される。だからISとして入る時も、会計ソフトを中心にして周辺業務のツールを接続する設計になる"
+},
+{id:"e-storage",icon:"<svg viewBox='0 0 24 24' width='20' height='20' fill='currentColor'><path d='M20 6h-8l-2-2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6 10H6v-2h8v2zm4-4H6v-2h12v2z'/></svg>",
+title:"電子帳簿保存（電帳法）",desc:"電子取引データの保存義務と対応方法",
+steps:[
+{title:"電子取引データの受信",detail:"対象: メール添付の請求書PDF / ECサイトの領収書（Amazon等）/ クラウドサービスの利用明細 / EDIデータ / スマホアプリの領収書"},
+{title:"改ざん防止措置の実施",detail:"以下のいずれかで対応:<br><br><b>A:</b> タイムスタンプを付与（受領後おおむね7営業日以内）<br><b>B:</b> 訂正削除の履歴が残るシステムに保存<br><b>C:</b> 事務処理規程を策定して運用",bakuraku:"バクラク電子帳簿保存: 方法Bで自動対応。JIIMA認証取得済み"},
+{title:"検索要件の確保",detail:"以下の3項目で検索できる状態にする:<ul><li>取引年月日</li><li>取引金額</li><li>取引先名</li></ul>ファイル名での対応例: 「20260315_330000_株式会社ABC_請求書.pdf」<br>ただしSaaSで管理する方が確実",bakuraku:"バクラク: AI-OCRで自動インデックス化。3項目の検索要件を自動充足"},
+{title:"保管",detail:"保存期間: 法人は<b>7年</b>（欠損金がある場合は10年）。税務調査時にダウンロード・画面表示できること"},
+{title:"紙で受け取った場合（スキャナ保存）※任意",detail:"解像度200dpi以上でスキャン。タイムスタンプ付与。原本との同等性を確認。<br><b>注意:</b> スキャナ保存は任意。やらない場合は紙のまま保管でOK"}
+],
+point:"2024年1月から電子取引データの電子保存が完全義務化。紙に印刷して保存はNG（法令違反で青色申告の承認取消リスク）"
+}
+];
+
+function renderFlowPage(){
+  const list=document.getElementById("flow-list");
+  if(list.children.length>0)return; // already rendered
+  list.innerHTML=FLOW_DATA.map(f=>{
+    let stepsHtml=f.steps.map(s=>{
+      let html=`<div class="flow-step"><div class="flow-step-title">${s.title}</div><div class="flow-step-detail">${s.detail}</div>`;
+      if(s.journal)html+=`<div class="flow-journal">${s.journal}</div>`;
+      if(s.bakuraku)html+=`<div class="flow-bakuraku">${s.bakuraku}</div>`;
+      html+=`</div>`;
+      return html;
+    }).join("");
+    let pointHtml=f.point?`<div class="flow-point"><div class="flow-point-label">POINT</div>${f.point}</div>`:"";
+    return `<div class="flow-card" id="flow-${f.id}">
+      <div class="flow-card-header" onclick="toggleFlow('${f.id}')">
+        <div class="flow-card-icon">${f.icon}</div>
+        <div class="flow-card-info"><div class="flow-card-title">${f.title}</div><div class="flow-card-desc">${f.desc}</div></div>
+        <div class="flow-card-arrow">&#9654;</div>
+      </div>
+      <div class="flow-card-body"><div class="flow-steps">${stepsHtml}</div>${pointHtml}</div>
+    </div>`;
+  }).join("");
+}
+
+function toggleFlow(id){
+  const card=document.getElementById("flow-"+id);
+  card.classList.toggle("open");
+}
+
 document.querySelectorAll(".nav-item").forEach(btn=>{
   btn.addEventListener("click",()=>{
     const screen=btn.dataset.screen;
@@ -720,6 +928,7 @@ function switchScreen(name){
     }else{showQuizSelect()}
   }
   if(name==="review")renderReview();
+  if(name==="flow")renderFlowPage();
   if(name==="progress")renderProgressPage();
 }
 
